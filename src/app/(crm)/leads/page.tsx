@@ -1,7 +1,20 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { leads, leadStatuses } from "@/lib/data";
+'use client';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { leads as initialLeads, leadStatuses, Lead } from '@/lib/data';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function LeadsPage() {
+  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+
+  const updateLeadStatus = (leadId: number, newStatus: Lead['status']) => {
+    setLeads(leads.map(lead => lead.id === leadId ? { ...lead, status: newStatus } : lead));
+  };
+
   return (
     <div className="space-y-8 font-headline">
       <header>
@@ -17,13 +30,27 @@ export default function LeadsPage() {
             </h2>
             <div className="space-y-4">
               {leads.filter(lead => lead.status === status).map(lead => (
-                <Card key={lead.id} className="border-4 border-black bg-white cursor-pointer group hover:bg-foreground">
-                  <CardHeader>
-                    <CardTitle className="text-2xl font-bold tracking-tight group-hover:text-background">{lead.name}</CardTitle>
+                <Card key={lead.id} className="border-4 border-black bg-white group">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-2xl font-bold tracking-tight">{lead.name}</CardTitle>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {leadStatuses.filter(s => s !== lead.status).map(newStatus => (
+                          <DropdownMenuItem key={newStatus} onClick={() => updateLeadStatus(lead.id, newStatus)} className="font-bold">
+                            Move to {newStatus}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground group-hover:text-background/80">{lead.project}</p>
-                    <p className="mt-4 text-2xl font-black group-hover:text-background">₹{lead.value.toLocaleString()}</p>
+                    <p className="text-muted-foreground">{lead.project}</p>
+                    <p className="mt-4 text-2xl font-black">₹{lead.value.toLocaleString()}</p>
                   </CardContent>
                 </Card>
               ))}
