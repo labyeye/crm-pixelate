@@ -58,16 +58,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('userId');
   };
   
-  // Don't render children until authentication status is determined
   if (loading) {
     return null; 
   }
 
-  // If not loading and not authenticated, and on a protected route, redirect
-  if (!user && !publicRoutes.includes(pathname)) {
-    // This check is already in useEffect, but as a safeguard.
-    // The effect should handle the redirect.
-    return null;
+  // If not authenticated and trying to access a protected route, redirect to login.
+  if (!user && !publicRoutes.includes(pathname) && pathname !== '/') {
+      // This is a safeguard. The useEffect should handle redirection.
+      // But if it renders before effect runs, this can prevent flashing protected content.
+      return null;
   }
 
   return (
