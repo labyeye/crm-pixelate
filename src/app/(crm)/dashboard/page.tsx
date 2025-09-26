@@ -52,7 +52,7 @@ export default function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--foreground))" opacity={0.2} />
                 <XAxis dataKey="month" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value / 1000}k`} />
-                <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
