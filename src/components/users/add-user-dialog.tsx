@@ -57,9 +57,9 @@ export function AddUserDialog({ isOpen, setIsOpen, onAddUser, children }: AddUse
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline text-3xl font-black tracking-tighter">Add New User</DialogTitle>
+          <DialogTitle className="font-headline text-3xl font-black tracking-tighter">Add New Member</DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new user.
+            Fill in the details below to add a new developer or editor.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -125,7 +125,7 @@ export function AddUserDialog({ isOpen, setIsOpen, onAddUser, children }: AddUse
                     )}
                 />
                  <DialogFooter>
-                    <Button type="submit" size="lg" className="text-lg w-full mt-4">Create User</Button>
+                    <Button type="submit" size="lg" className="text-lg w-full mt-4">Create Member</Button>
                 </DialogFooter>
             </form>
         </Form>

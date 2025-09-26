@@ -18,7 +18,7 @@ const navItems = [
   { href: '/quotations', label: 'Quotations', adminOnly: false, icon: FileText },
   { href: '/projects', label: 'Projects', adminOnly: false, icon: Briefcase },
   { href: '/invoicing', label: 'Invoicing', adminOnly: true, icon: Receipt },
-  { href: '/users', label: 'Users', adminOnly: true, icon: Users },
+  { href: '/developers-and-editors', label: 'Developers & Editors', adminOnly: true, icon: Users },
   { href: '/services', label: 'Services', adminOnly: true, icon: Code },
   { href: '/support', label: 'Support', adminOnly: false, icon: LifeBuoy },
 ];

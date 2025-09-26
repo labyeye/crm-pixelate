@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default function UsersPage() {
+export default function DevelopersAndEditorsPage() {
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -38,15 +38,15 @@ export default function UsersPage() {
     <div className="space-y-8 font-headline">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-5xl font-black tracking-tighter">USERS</h1>
-          <p className="text-muted-foreground text-lg">Manage all users in the system.</p>
+          <h1 className="text-5xl font-black tracking-tighter">DEVELOPERS & EDITORS</h1>
+          <p className="text-muted-foreground text-lg">Manage all developers and editors in the system.</p>
         </div>
         <AddUserDialog 
             isOpen={isDialogOpen}
             setIsOpen={setIsDialogOpen}
             onAddUser={handleAddUser}
         >
-            <Button size="lg" className="text-lg">Add User</Button>
+            <Button size="lg" className="text-lg">Add New</Button>
         </AddUserDialog>
       </header>
 
