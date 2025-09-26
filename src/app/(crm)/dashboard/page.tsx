@@ -6,6 +6,7 @@ import { stats } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
+import Link from "next/link";
 
 
 const chartData = [

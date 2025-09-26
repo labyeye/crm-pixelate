@@ -29,9 +29,10 @@ type AddUserDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onAddUser: (newUser: Omit<User, 'id'>) => void;
+  children: React.ReactNode;
 };
 
-export function AddUserDialog({ isOpen, setIsOpen, onAddUser }: AddUserDialogProps) {
+export function AddUserDialog({ isOpen, setIsOpen, onAddUser, children }: AddUserDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,7 +51,7 @@ export function AddUserDialog({ isOpen, setIsOpen, onAddUser }: AddUserDialogPro
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="text-lg">Add User</Button>
+        {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

@@ -30,9 +30,10 @@ type AddQuotationDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onAddQuotation: (newQuote: Omit<Quotation, 'id' | 'status'>) => void;
+  children: React.ReactNode;
 };
 
-export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation }: AddQuotationDialogProps) {
+export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children }: AddQuotationDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,7 +56,7 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation }: AddQuo
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="text-lg">New Quotation</Button>
+        {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -114,4 +115,3 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation }: AddQuo
     </Dialog>
   );
 }
-

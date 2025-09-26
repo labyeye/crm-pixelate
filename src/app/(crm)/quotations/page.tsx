@@ -81,7 +81,9 @@ export default function QuotationsPage() {
             isOpen={isDialogOpen} 
             setIsOpen={setIsDialogOpen}
             onAddQuotation={addQuotation}
-        />
+        >
+            <Button size="lg" className="text-lg">New Quotation</Button>
+        </AddQuotationDialog>
       </header>
 
       <div className="space-y-8">

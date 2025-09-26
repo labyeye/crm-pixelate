@@ -45,7 +45,9 @@ export default function UsersPage() {
             isOpen={isDialogOpen}
             setIsOpen={setIsDialogOpen}
             onAddUser={handleAddUser}
-        />
+        >
+            <Button size="lg" className="text-lg">Add User</Button>
+        </AddUserDialog>
       </header>
 
       <div className="border-2 border-black">

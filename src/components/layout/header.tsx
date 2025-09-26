@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
@@ -21,7 +21,7 @@ const navItems = [
 ];
 
 
-function NavLinks() {
+function NavLinks({ onLinkClick }: { onLinkClick?: () => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -33,6 +33,7 @@ function NavLinks() {
           <Link
             key={item.href}
             href={item.href}
+            onClick={onLinkClick}
             className={cn(
               "block rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
               pathname.startsWith(item.href)
@@ -50,6 +51,14 @@ function NavLinks() {
 
 export function MobileHeader() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    setIsOpen(false);
+    router.push('/login');
+  }
 
     return (
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b-2 border-black bg-background px-4 md:hidden">
@@ -72,10 +81,10 @@ export function MobileHeader() {
                         </Link>
                       </div>
                       <nav className="flex-1 p-6 space-y-2">
-                        <NavLinks />
+                        <NavLinks onLinkClick={() => setIsOpen(false)} />
                       </nav>
                       <div className="p-6 border-t-2 border-black">
-                        <Button variant="outline" className="w-full">Logout</Button>
+                        <Button variant="outline" className="w-full" onClick={handleLogout}>Logout</Button>
                       </div>
                     </div>
                 </SheetContent>
