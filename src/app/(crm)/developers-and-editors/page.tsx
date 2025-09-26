@@ -3,15 +3,15 @@
 
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { users as initialUsers, User, addUser } from "@/lib/data";
-import { AddUserDialog } from "@/components/developers-and-editors/add-user-dialog";
+import { teamMembers as initialTeamMembers, TeamMember, addTeamMember } from "@/lib/data";
+import { AddMemberDialog } from "@/components/developers-and-editors/add-member-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function DevelopersAndEditorsPage() {
   const { user } = useAuth();
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   if (user?.role !== 'admin') {
@@ -29,9 +29,9 @@ export default function DevelopersAndEditorsPage() {
     );
   }
   
-  const handleAddUser = (newUser: Omit<User, 'id'>) => {
-    const addedUser = addUser(newUser);
-    setUsers(prev => [...prev, addedUser]);
+  const handleAddMember = (newMemberData: Omit<TeamMember, 'id'>) => {
+    const addedMember = addTeamMember(newMemberData);
+    setTeamMembers(prev => [...prev, addedMember]);
   };
 
   return (
@@ -39,15 +39,15 @@ export default function DevelopersAndEditorsPage() {
       <header className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-5xl font-black tracking-tighter">DEVELOPERS & EDITORS</h1>
-          <p className="text-muted-foreground text-lg">Manage all developers and editors in the system.</p>
+          <p className="text-muted-foreground text-lg">Manage your creative and technical team members.</p>
         </div>
-        <AddUserDialog 
+        <AddMemberDialog 
             isOpen={isDialogOpen}
             setIsOpen={setIsDialogOpen}
-            onAddUser={handleAddUser}
+            onAddMember={handleAddMember}
         >
             <Button size="lg" className="text-lg">Add New</Button>
-        </AddUserDialog>
+        </AddMemberDialog>
       </header>
 
       <div className="border-2 border-black">
@@ -55,16 +55,21 @@ export default function DevelopersAndEditorsPage() {
           <TableHeader>
             <TableRow className="border-b-2 border-black">
               <TableHead className="text-base font-bold">Name</TableHead>
-              <TableHead className="text-base font-bold">Email</TableHead>
+              <TableHead className="text-base font-bold">Contact</TableHead>
+              <TableHead className="text-base font-bold">Address</TableHead>
               <TableHead className="text-right text-base font-bold">Role</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((u) => (
-              <TableRow key={u.id} className="border-b-2 border-black last:border-b-0">
-                <TableCell className="font-bold text-base py-4">{u.name}</TableCell>
-                <TableCell className="text-base py-4">{u.email}</TableCell>
-                <TableCell className="text-right py-4 text-base font-bold uppercase">{u.role}</TableCell>
+            {teamMembers.map((member) => (
+              <TableRow key={member.id} className="border-b-2 border-black last:border-b-0">
+                <TableCell className="font-bold text-base py-4">{member.name}</TableCell>
+                <TableCell className="text-base py-4">
+                  <div>{member.email}</div>
+                  <div>{member.phone}</div>
+                </TableCell>
+                <TableCell className="text-base py-4">{member.address}</TableCell>
+                <TableCell className="text-right py-4 text-base font-bold uppercase">{member.role}</TableCell>
               </TableRow>
             ))}
           </TableBody>

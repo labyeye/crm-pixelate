@@ -1,5 +1,4 @@
 
-
 // This is a global state hack for demo purposes.
 // In a real app, you'd use a proper state management solution or a database.
 let usersStore: User[] = [
@@ -224,3 +223,43 @@ export const addService = (service: Omit<Service, 'id'>): Service => {
     }
     return newService;
 }
+
+// New data structure for Developers and Editors
+export interface TeamMember {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    role: 'Web Developer' | 'Editor' | 'Designer' | 'Project Manager';
+    // Optional fields
+    pan?: string;
+    aadhar?: string;
+    secondaryPhone?: string;
+    secondaryEmail?: string;
+    salary?: number;
+}
+
+let teamMembersStore: TeamMember[] = [
+    { id: 1, name: 'Alice Johnson', email: 'alice@pixelate.com', phone: '111-222-3333', address: '1 Creative Way', role: 'Web Developer' },
+    { id: 2, name: 'Bob Williams', email: 'bob@pixelate.com', phone: '444-555-6666', address: '2 Design Drive', role: 'Editor' },
+];
+
+if (typeof window !== 'undefined' && !(window as any).__teamMembersStore) {
+    (window as any).__teamMembersStore = teamMembersStore;
+} else if (typeof window !== 'undefined') {
+    teamMembersStore = (window as any).__teamMembersStore;
+}
+export const teamMembers: TeamMember[] = teamMembersStore;
+
+
+export const addTeamMember = (member: Omit<TeamMember, 'id'>): TeamMember => {
+    const newId = (typeof window !== 'undefined' && (window as any).__teamMembersStore)
+        ? (window as any).__teamMembersStore.reduce((maxId: number, m: TeamMember) => Math.max(m.id, maxId), 0) + 1
+        : new Date().getTime();
+    const newMember = { ...member, id: newId };
+    if (typeof window !== 'undefined') {
+        (window as any).__teamMembersStore.push(newMember);
+    }
+    return newMember;
+};
