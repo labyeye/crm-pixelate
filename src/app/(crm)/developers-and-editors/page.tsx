@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { users as initialUsers, User, addUser } from "@/lib/data";
-import { AddUserDialog } from "@/components/users/add-user-dialog";
+import { AddUserDialog } from "@/components/developers-and-editors/add-user-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
