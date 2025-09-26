@@ -1,4 +1,13 @@
-export const leads = [
+
+export interface Lead {
+  id: number;
+  name: string;
+  project: string;
+  value: number;
+  status: 'NEW' | 'QUALIFIED' | 'PROPOSAL SENT';
+}
+
+export const leads: Lead[] = [
   { id: 1, name: 'QuantumLeap Corp', project: 'AI Platform Development', value: 120000, status: 'NEW' },
   { id: 2, name: 'Stellar Solutions', project: 'Mobile App Redesign', value: 75000, status: 'NEW' },
   { id: 3, name: 'Nexus Innovations', project: 'Cloud Migration Strategy', value: 95000, status: 'QUALIFIED' },
@@ -16,7 +25,15 @@ export const projects = [
   { id: 4, title: 'Project Orion', client: 'QuantumLeap Corp', progress: 20, description: 'Initial phase of AI-driven analytics platform.' },
 ];
 
-export const quotations = [
+export interface Quotation {
+    id: string;
+    client: string;
+    amount: number;
+    status: 'APPROVED' | 'PENDING' | 'REJECTED';
+    services: string[];
+}
+
+export const quotations: Quotation[] = [
   { id: 'Q-2024-001', client: 'Apex Digital', amount: 250000, status: 'APPROVED', services: ['Web Development', 'UX/UI Design', 'Project Management'], },
   { id: 'Q-2024-002', client: 'Nexus Innovations', amount: 95000, status: 'PENDING', services: ['Cloud Consulting', 'DevOps Strategy'], },
   { id: 'Q-2024-003', client: 'CyberNetics Inc.', amount: 45000, status: 'REJECTED', services: ['Security Audit'], },
