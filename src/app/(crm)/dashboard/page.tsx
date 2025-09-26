@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { stats } from "@/lib/data";
 import { cn } from "@/lib/utils";
