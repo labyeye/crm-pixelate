@@ -128,7 +128,8 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
                                             <CommandItem
                                                 value={service.name}
                                                 key={service.id}
-                                                onSelect={() => {
+                                                onSelect={(e) => {
+                                                    e.preventDefault(); // This is the fix
                                                     const currentServices = field.value || [];
                                                     const isSelected = currentServices.some(s => s.id === service.id);
                                                     if (isSelected) {
