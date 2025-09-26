@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import type { Quotation, Service } from "@/lib/data";
 import { services as allServices } from "@/lib/data";
 import { Switch } from "@/components/ui/switch";
@@ -228,3 +228,5 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
     </Dialog>
   );
 }
+
+    
