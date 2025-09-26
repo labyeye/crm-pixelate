@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { stats, projects, invoices, leads } from "@/lib/data";
+import { stats, projects, invoices, leads, quotations, services } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
@@ -46,6 +46,18 @@ const leadsByStatus = leads.reduce((acc, lead) => {
     acc[lead.status] = (acc[lead.status] || 0) + 1;
     return acc;
 }, {} as Record<string, number>);
+
+const serviceUsageCounts = quotations
+  .filter(q => q.status === 'APPROVED')
+  .flatMap(q => q.services)
+  .reduce((acc, service) => {
+    acc[service.name] = (acc[service.name] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+const serviceChartData = Object.entries(serviceUsageCounts)
+    .map(([service, count]) => ({ service, count }))
+    .sort((a, b) => b.count - a.count);
 
 
 export default function DashboardPage() {
@@ -170,6 +182,25 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
             </div>
+            
+            <Card className="border-2 border-black">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-black tracking-tighter">Top Services</CardTitle>
+                    <CardDescription>Which services are bringing in the most business.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="h-[400px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart layout="vertical" data={serviceChartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--foreground))" opacity={0.2} />
+                                <XAxis type="number" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis type="category" dataKey="service" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} width={120} />
+                                <Bar dataKey="count" name="Projects" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </CardContent>
+            </Card>
 
           </TabsContent>
         </Tabs>
@@ -188,3 +219,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+    
