@@ -18,7 +18,15 @@ export const leads: Lead[] = [
 export const leadStatuses: ('NEW' | 'QUALIFIED' | 'PROPOSAL SENT')[] = ['NEW', 'QUALIFIED', 'PROPOSAL SENT'];
 
 
-export const projects = [
+export interface Project {
+    id: number;
+    title: string;
+    client: string;
+    progress: number;
+    description: string;
+}
+
+export const projects: Project[] = [
   { id: 1, title: 'Project Phoenix', client: 'Stellar Solutions', progress: 75, description: 'Complete redesign of their flagship mobile application.' },
   { id: 2, title: 'Project Titan', client: 'Apex Digital', progress: 40, description: 'Full-stack e-commerce platform development.' },
   { id: 3, title: 'Project Nova', client: 'Visionary Ventures', progress: 90, description: 'New brand identity and style guide creation.' },

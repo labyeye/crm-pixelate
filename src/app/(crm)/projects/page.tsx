@@ -1,9 +1,37 @@
+
+'use client';
+
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { projects } from "@/lib/data";
+import { projects as initialProjects, Project } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 
+// This is a global state hack for demo purposes.
+// In a real app, you'd use a proper state management solution.
+let projectsStore: Project[] = initialProjects;
+if (typeof window !== 'undefined' && !(window as any).__projectsStore) {
+    (window as any).__projectsStore = projectsStore;
+} else if (typeof window !== 'undefined') {
+    projectsStore = (window as any).__projectsStore;
+}
+
+
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>(projectsStore);
+
+  // This effect will sync the state with the global store.
+  // This is needed because Next.js can re-render the page without a full reload.
+  useState(() => {
+    const interval = setInterval(() => {
+      if ((window as any).__projectsStore !== projects) {
+        setProjects((window as any).__projectsStore);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  });
+
+
   return (
     <div className="space-y-8 font-headline">
       <header>
