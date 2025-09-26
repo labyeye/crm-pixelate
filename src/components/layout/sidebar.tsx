@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useAuth } from '@/hooks/use-auth';
-import { Code, Users, LayoutDashboard, KanbanSquare, FileText, Briefcase, Receipt, LifeBuoy } from 'lucide-react';
+import { Code, Users, LayoutDashboard, KanbanSquare, FileText, Briefcase, Receipt, LifeBuoy, Columns } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', adminOnly: false, icon: LayoutDashboard },
+  { href: '/timeline', label: 'Timeline', adminOnly: false, icon: Columns },
   { href: '/leads', label: 'Leads', adminOnly: false, icon: KanbanSquare },
   { href: '/clients', label: 'Clients', adminOnly: false, icon: Users },
   { href: '/quotations', label: 'Quotations', adminOnly: false, icon: FileText },

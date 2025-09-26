@@ -109,20 +109,27 @@ export const leads: Lead[] = [
 export const leadStatuses: ('NEW' | 'QUALIFIED' | 'PROPOSAL SENT')[] = ['NEW', 'QUALIFIED', 'PROPOSAL SENT'];
 
 
+export type ProjectStatus = 'BACKLOG' | 'IN PROGRESS' | 'IN REVIEW' | 'COMPLETED';
+
 export interface Project {
     id: number;
     title: string;
     client: string;
     progress: number;
     description: string;
+    status: ProjectStatus;
 }
 
 export const projects: Project[] = [
-  { id: 1, title: 'Project Phoenix', client: 'Stellar Solutions', progress: 75, description: 'Complete redesign of their flagship mobile application.' },
-  { id: 2, title: 'Project Titan', client: 'Apex Digital', progress: 40, description: 'Full-stack e-commerce platform development.' },
-  { id: 3, title: 'Project Nova', client: 'Visionary Ventures', progress: 90, description: 'New brand identity and style guide creation.' },
-  { id: 4, title: 'Project Orion', client: 'QuantumLeap Corp', progress: 20, description: 'Initial phase of AI-driven analytics platform.' },
+  { id: 1, title: 'Project Phoenix', client: 'Stellar Solutions', progress: 75, description: 'Complete redesign of their flagship mobile application.', status: 'IN PROGRESS' },
+  { id: 2, title: 'Project Titan', client: 'Apex Digital', progress: 40, description: 'Full-stack e-commerce platform development.', status: 'IN PROGRESS' },
+  { id: 3, title: 'Project Nova', client: 'Visionary Ventures', progress: 90, description: 'New brand identity and style guide creation.', status: 'IN REVIEW' },
+  { id: 4, title: 'Project Orion', client: 'QuantumLeap Corp', progress: 20, description: 'Initial phase of AI-driven analytics platform.', status: 'BACKLOG' },
+  { id: 5, title: 'Website Refresh', client: 'Old Client LLC', progress: 100, description: 'A small website refresh.', status: 'COMPLETED' },
 ];
+
+export const projectStatuses: ProjectStatus[] = ['BACKLOG', 'IN PROGRESS', 'IN REVIEW', 'COMPLETED'];
+
 
 export interface Quotation {
     id: string;
