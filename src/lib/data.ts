@@ -69,16 +69,54 @@ export const projects: Project[] = [
 
 export interface Quotation {
     id: string;
-    client: string;
-    amount: number;
     status: 'APPROVED' | 'PENDING' | 'REJECTED';
-    services: string[];
+    clientName: string;
+    clientEmail: string;
+    clientPhone: string;
+    clientAddress: string;
+    hasGst: boolean;
+    gstCompanyName?: string;
+    gstNumber?: string;
+    gstAddress?: string;
+    services: { id: number; name: string }[];
+    amount: number;
+    discount: number;
+    deliveryDate: Date;
+    authorId: number;
 }
 
 export const quotations: Quotation[] = [
-  { id: 'Q-2024-001', client: 'Apex Digital', amount: 250000, status: 'APPROVED', services: ['Web Development', 'UX/UI Design', 'Project Management'], },
-  { id: 'Q-2024-002', client: 'Nexus Innovations', amount: 95000, status: 'PENDING', services: ['Cloud Consulting', 'DevOps Strategy'], },
-  { id: 'Q-2024-003', client: 'CyberNetics Inc.', amount: 45000, status: 'REJECTED', services: ['Security Audit'], },
+  { 
+    id: 'Q-2024-001', 
+    clientName: 'Apex Digital',
+    clientEmail: 'contact@apex.co',
+    clientAddress: '123 Tech Park, Silicon Valley',
+    clientPhone: '123-456-7890',
+    amount: 250000, 
+    status: 'APPROVED', 
+    services: [{id: 1, name: 'Web Development'}, {id: 2, name: 'UX/UI Design'}],
+    hasGst: false,
+    discount: 0,
+    deliveryDate: new Date('2024-09-30'),
+    authorId: 1,
+  },
+  { 
+    id: 'Q-2024-002', 
+    clientName: 'Nexus Innovations',
+    clientEmail: 'info@nexus.io',
+    clientAddress: '456 Future Drive, Innovation City',
+    clientPhone: '098-765-4321',
+    amount: 95000, 
+    status: 'PENDING', 
+    services: [{id: 3, name: 'Cloud Consulting'}],
+    hasGst: true,
+    gstCompanyName: 'Nexus Innovations LLC',
+    gstNumber: 'GSTIN123456',
+    gstAddress: '456 Future Drive, Innovation City',
+    discount: 5000,
+    deliveryDate: new Date('2024-08-15'),
+    authorId: 2,
+  },
 ];
 
 export const invoices = [
@@ -102,3 +140,32 @@ export const stats = [
     { name: 'Conversion Rate', value: '24.5%', change: '-1.8%', changeType: 'negative' },
     { name: 'Active Projects', value: '4', change: '0%', changeType: 'neutral' },
 ];
+
+
+export interface Service {
+    id: number;
+    name: string;
+}
+
+export const services: Service[] = [
+    { id: 1, name: 'Web Development' },
+    { id: 2, name: 'UX/UI Design' },
+    { id: 3, name: 'Cloud Consulting' },
+    { id: 4, name: 'Video Editing' },
+    { id: 5, name: 'SEO Strategy' },
+];
+
+// This is a global state hack for demo purposes.
+if (typeof window !== 'undefined' && !(window as any).__servicesStore) {
+    (window as any).__servicesStore = services;
+} else if (typeof window !== 'undefined') {
+    (window as any).__servicesStore = (window as any).__servicesStore.length ? (window as any).__servicesStore : services;
+}
+
+export const addService = (service: Omit<Service, 'id'>): Service => {
+    const newService = { ...service, id: new Date().getTime() };
+    if (typeof window !== 'undefined') {
+        (window as any).__servicesStore.push(newService);
+    }
+    return newService;
+}

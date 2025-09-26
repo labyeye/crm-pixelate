@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useAuth } from '@/hooks/use-auth';
+import { Code, Bot } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', adminOnly: false },
@@ -16,6 +17,7 @@ const navItems = [
   { href: '/projects', label: 'Projects', adminOnly: false },
   { href: '/invoicing', label: 'Invoicing', adminOnly: true },
   { href: '/users', label: 'Users', adminOnly: true },
+  { href: '/services', label: 'Services', adminOnly: true, icon: Code },
   { href: '/support', label: 'Support', adminOnly: false },
 ];
 
@@ -56,12 +58,13 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "block rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
+                "flex items-center gap-4 rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
                 pathname.startsWith(item.href)
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-background text-foreground hover:bg-foreground hover:text-background'
               )}
             >
+              {item.icon && <item.icon />}
               {item.label}
             </Link>
           )

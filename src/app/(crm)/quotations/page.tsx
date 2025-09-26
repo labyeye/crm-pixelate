@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { quotations as initialQuotations, Quotation, Project } from "@/lib/data";
+import { quotations as initialQuotations, Quotation, Project, users } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { AddQuotationDialog } from "@/components/quotations/add-quotation-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -14,6 +14,9 @@ import { MoreVertical, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QuotationPDF } from "@/components/quotations/quotation-pdf";
 import { renderToString } from "react-dom/server";
+import { useAuth } from "@/hooks/use-auth";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 // This is a global state hack for demo purposes.
 if (typeof window !== 'undefined' && !(window as any).__projectsStore) {
@@ -24,10 +27,18 @@ export default function QuotationsPage() {
   const [quotations, setQuotations] = useState<Quotation[]>(initialQuotations);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const addQuotation = (newQuote: Omit<Quotation, 'id' | 'status'>) => {
+  const addQuotation = (newQuoteData: Omit<Quotation, 'id' | 'status' | 'authorId'>) => {
+    if (!user) return;
     const newId = `Q-${new Date().getFullYear()}-${(quotations.length + 1).toString().padStart(3, '0')}`;
-    setQuotations(prev => [{ ...newQuote, id: newId, status: 'PENDING' }, ...prev]);
+    const newQuotation: Quotation = {
+      ...newQuoteData,
+      id: newId,
+      status: 'PENDING',
+      authorId: user.id,
+    };
+    setQuotations(prev => [newQuotation, ...prev]);
   };
 
   const updateStatus = (id: string, status: 'APPROVED' | 'REJECTED') => {
@@ -41,10 +52,10 @@ export default function QuotationsPage() {
   const createProjectFromQuote = (quote: Quotation) => {
     const newProject: Project = {
         id: new Date().getTime(), // simple unique id
-        title: `New Project for ${quote.client}`,
-        client: quote.client,
+        title: `New Project for ${quote.clientName}`,
+        client: quote.clientName,
         progress: 0,
-        description: `Project created from quotation ${quote.id}. Services: ${quote.services.join(', ')}`,
+        description: `Project created from quotation ${quote.id}. Services: ${quote.services.map(s => s.name).join(', ')}`,
     };
 
     // This is a global state hack for demo purposes.
@@ -52,7 +63,7 @@ export default function QuotationsPage() {
     
     toast({
         title: "Project Created!",
-        description: `A new project has been created for ${quote.client}.`,
+        description: `A new project has been created for ${quote.clientName}.`,
     });
   };
 
@@ -70,6 +81,10 @@ export default function QuotationsPage() {
     });
   };
 
+  const getAuthorName = (authorId: number) => {
+      return users.find(u => u.id === authorId)?.name || 'Unknown';
+  }
+
   return (
     <div className="space-y-8 font-headline">
       <header className="flex items-center justify-between gap-4">
@@ -86,70 +101,75 @@ export default function QuotationsPage() {
         </AddQuotationDialog>
       </header>
 
-      <div className="space-y-8">
-        {quotations.map((quote) => (
-          <Card key={quote.id} className="border-4 border-black">
-            <CardHeader className="sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <CardTitle className="text-3xl font-black tracking-tighter">{quote.id}</CardTitle>
-                <p className="text-lg text-muted-foreground font-bold">{quote.client}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className={cn("text-2xl font-black p-2",
-                  quote.status === 'APPROVED' && 'bg-success text-success-foreground',
-                  quote.status === 'REJECTED' && 'bg-destructive text-destructive-foreground',
-                  quote.status === 'PENDING' && 'bg-accent text-accent-foreground'
-                )}>
-                  {quote.status}
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-6 w-6" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => generatePdf(quote)} className="font-bold">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download PDF
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => deleteQuotation(quote.id)} className="text-destructive font-bold">
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Separator className="border-t-2 border-black" />
-              <div>
-                <h3 className="text-base font-bold text-muted-foreground tracking-widest">SERVICES</h3>
-                <ul className="text-lg font-bold list-none mt-2 space-y-1">
-                  {quote.services.map(service => <li key={service}>- {service}</li>)}
-                </ul>
-              </div>
-              <Separator className="border-t-2 border-black" />
-              <div className="flex justify-between items-center">
-                <h3 className="text-base font-bold text-muted-foreground tracking-widest">TOTAL</h3>
-                <p className="text-4xl font-black">₹{quote.amount.toLocaleString()}</p>
-              </div>
-            </CardContent>
-            
-            <Separator className="border-t-2 border-black" />
-            <CardFooter className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {quote.status === 'PENDING' ? (
-                    <>
-                        <Button variant="destructive" className="text-xl h-16" onClick={() => updateStatus(quote.id, 'REJECTED')}>REJECT</Button>
-                        <Button className="text-xl h-16 bg-success text-success-foreground hover:bg-success/90" onClick={() => updateStatus(quote.id, 'APPROVED')}>CONFIRM</Button>
-                    </>
-                ) : quote.status === 'APPROVED' ? (
-                    <Button className="text-xl h-16 col-span-2" onClick={() => createProjectFromQuote(quote)}>CREATE PROJECT</Button>
-                ) : (
-                    <p className="text-lg text-muted-foreground font-bold col-span-2 text-center">This quotation has been rejected.</p>
-                )}
-            </CardFooter>
-          </Card>
-        ))}
+      <div className="border-2 border-black">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b-2 border-black">
+              <TableHead className="text-base font-bold">Details</TableHead>
+              <TableHead className="text-base font-bold">Client</TableHead>
+              <TableHead className="text-base font-bold">Services</TableHead>
+              <TableHead className="text-base font-bold text-right">Amount</TableHead>
+              <TableHead className="text-base font-bold text-center">Status</TableHead>
+              <TableHead className="text-base font-bold text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {quotations.map((quote) => (
+              <TableRow key={quote.id} className="border-b-2 border-black last:border-b-0">
+                <TableCell className="py-4">
+                    <div className="font-bold text-base">{quote.id}</div>
+                    <div className="text-sm text-muted-foreground">by {getAuthorName(quote.authorId)}</div>
+                    <div className="text-sm text-muted-foreground">{new Date(quote.deliveryDate).toLocaleDateString()}</div>
+                </TableCell>
+                <TableCell className="text-base py-4 font-bold">{quote.clientName}</TableCell>
+                <TableCell className="text-base py-4">
+                    <div className="flex flex-wrap gap-1">
+                        {quote.services.map(s => <Badge key={s.id} variant="secondary">{s.name}</Badge>)}
+                    </div>
+                </TableCell>
+                <TableCell className="text-right font-bold text-base py-4">₹{(quote.amount - quote.discount).toLocaleString()}</TableCell>
+                <TableCell className="text-center py-4">
+                    <span className={cn("text-xl font-black tracking-widest p-2",
+                      quote.status === 'APPROVED' && 'bg-success text-success-foreground',
+                      quote.status === 'REJECTED' && 'bg-destructive text-destructive-foreground',
+                      quote.status === 'PENDING' && 'bg-accent text-accent-foreground'
+                    )}>
+                        {quote.status}
+                    </span>
+                </TableCell>
+                <TableCell className="text-right py-4">
+                    <div className="flex items-center justify-end gap-2">
+                        {quote.status === 'PENDING' && (
+                            <>
+                                <Button size="sm" variant="destructive" onClick={() => updateStatus(quote.id, 'REJECTED')}>REJECT</Button>
+                                <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" onClick={() => updateStatus(quote.id, 'APPROVED')}>APPROVE</Button>
+                            </>
+                        )}
+                        {quote.status === 'APPROVED' && (
+                            <Button size="sm" onClick={() => createProjectFromQuote(quote)}>CREATE PROJECT</Button>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-5 w-5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => generatePdf(quote)} className="font-bold">
+                              <Download className="mr-2 h-4 w-4" />
+                              Download PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteQuotation(quote.id)} className="text-destructive font-bold">
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

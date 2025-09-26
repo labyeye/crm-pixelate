@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, Code } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/projects', label: 'Projects', adminOnly: false },
   { href: '/invoicing', label: 'Invoicing', adminOnly: true },
   { href: '/users', label: 'Users', adminOnly: true },
+  { href: '/services', label: 'Services', adminOnly: true, icon: Code },
   { href: '/support', label: 'Support', adminOnly: false },
 ];
 
@@ -35,12 +36,13 @@ function NavLinks({ onLinkClick }: { onLinkClick?: () => void }) {
             href={item.href}
             onClick={onLinkClick}
             className={cn(
-              "block rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
+              "flex items-center gap-4 rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
               pathname.startsWith(item.href)
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-background text-foreground hover:bg-foreground hover:text-background'
             )}
           >
+            {item.icon && <item.icon />}
             {item.label}
           </Link>
         )
