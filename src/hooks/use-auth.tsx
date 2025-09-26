@@ -24,24 +24,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    try {
-      const storedUserId = sessionStorage.getItem('userId');
-      if (storedUserId) {
-        const foundUser = users.find(u => u.id === parseInt(storedUserId, 10));
-        if (foundUser) {
-          setUser(foundUser);
+    const checkUser = () => {
+      try {
+        const storedUserId = sessionStorage.getItem('userId');
+        if (storedUserId) {
+          const foundUser = users.find(u => u.id === parseInt(storedUserId, 10));
+          if (foundUser) {
+            setUser(foundUser);
+          } else {
+            // Clear invalid user id from storage
+            sessionStorage.removeItem('userId');
+            setUser(null);
+          }
+        } else {
+            setUser(null);
         }
+      } catch (e) {
+        console.error("Could not access session storage.");
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.error("Could not access session storage.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    };
+    checkUser();
+  }, [pathname]); // Re-check on path change could be useful
 
   useEffect(() => {
-    if (!loading && !user && !publicRoutes.includes(pathname)) {
-      router.push('/login');
+    if (!loading) {
+        const isPublic = publicRoutes.includes(pathname);
+        if (!user && !isPublic) {
+            router.push('/login');
+        }
     }
   }, [loading, user, pathname, router]);
 
@@ -65,8 +78,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return null; // Don't render anything until client-side check is complete
   }
 
+  if (!user && !publicRoutes.includes(pathname)) {
+    // While redirecting, render nothing to prevent flashing of content
+    return null;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading: loading }}>
       {children}
     </AuthContext.Provider>
   );
