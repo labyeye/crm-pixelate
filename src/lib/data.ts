@@ -118,15 +118,24 @@ export interface Project {
     progress: number;
     description: string;
     status?: ProjectStatus;
+    dueDate?: string;
+    assignees?: number[]; // Array of TeamMember IDs
 }
 
-export const projects: Project[] = [
-  { id: 1, title: 'Project Phoenix', client: 'Stellar Solutions', progress: 75, description: 'Complete redesign of their flagship mobile application.', status: 'IN PROGRESS' },
-  { id: 2, title: 'Project Titan', client: 'Apex Digital', progress: 40, description: 'Full-stack e-commerce platform development.', status: 'IN PROGRESS' },
-  { id: 3, title: 'Project Nova', client: 'Visionary Ventures', progress: 90, description: 'New brand identity and style guide creation.', status: 'IN REVIEW' },
-  { id: 4, title: 'Project Orion', client: 'QuantumLeap Corp', progress: 20, description: 'Initial phase of AI-driven analytics platform.', status: 'BACKLOG' },
-  { id: 5, title: 'Website Refresh', client: 'Old Client LLC', progress: 100, description: 'A small website refresh.', status: 'COMPLETED' },
+export let projects: Project[] = [
+  { id: 1, title: 'Project Phoenix', client: 'Stellar Solutions', progress: 75, description: 'Complete redesign of their flagship mobile application.', status: 'IN PROGRESS', dueDate: '2024-08-15', assignees: [1] },
+  { id: 2, title: 'Project Titan', client: 'Apex Digital', progress: 40, description: 'Full-stack e-commerce platform development.', status: 'IN PROGRESS', dueDate: '2024-09-30', assignees: [1, 2] },
+  { id: 3, title: 'Project Nova', client: 'Visionary Ventures', progress: 90, description: 'New brand identity and style guide creation.', status: 'IN REVIEW', dueDate: '2024-07-20', assignees: [2] },
+  { id: 4, title: 'Project Orion', client: 'QuantumLeap Corp', progress: 20, description: 'Initial phase of AI-driven analytics platform.', status: 'BACKLOG', dueDate: '2024-10-01' },
+  { id: 5, title: 'Website Refresh', client: 'Old Client LLC', progress: 100, description: 'A small website refresh.', status: 'COMPLETED', dueDate: '2024-06-30' },
 ];
+
+if (typeof window !== 'undefined' && !(window as any).__projectsStore) {
+    (window as any).__projectsStore = projects;
+} else if (typeof window !== 'undefined') {
+    projects = (window as any).__projectsStore;
+}
+
 
 export const projectStatuses: ProjectStatus[] = ['BACKLOG', 'IN PROGRESS', 'IN REVIEW', 'COMPLETED'];
 
@@ -238,11 +247,13 @@ export interface TeamMember {
     secondaryPhone?: string;
     secondaryEmail?: string;
     salary?: number;
+    avatarUrl?: string;
 }
 
 let teamMembersStore: TeamMember[] = [
-    { id: 1, name: 'Alice Johnson', email: 'alice@pixelate.com', phone: '111-222-3333', address: '1 Creative Way', role: 'Web Developer' },
-    { id: 2, name: 'Bob Williams', email: 'bob@pixelate.com', phone: '444-555-6666', address: '2 Design Drive', role: 'Editor' },
+    { id: 1, name: 'Alice Johnson', email: 'alice@pixelate.com', phone: '111-222-3333', address: '1 Creative Way', role: 'Web Developer', avatarUrl: 'https://i.pravatar.cc/150?u=alice' },
+    { id: 2, name: 'Bob Williams', email: 'bob@pixelate.com', phone: '444-555-6666', address: '2 Design Drive', role: 'Editor', avatarUrl: 'https://i.pravatar.cc/150?u=bob' },
+    { id: 3, name: 'Charlie Brown', email: 'charlie@pixelate.com', phone: '777-888-9999', address: '3 Code Court', role: 'Designer', avatarUrl: 'https://i.pravatar.cc/150?u=charlie' },
 ];
 
 if (typeof window !== 'undefined' && !(window as any).__teamMembersStore) {

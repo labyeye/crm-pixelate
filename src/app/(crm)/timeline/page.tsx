@@ -3,9 +3,15 @@
 
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { projects as initialProjects, projectStatuses, Project, ProjectStatus } from '@/lib/data';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { projects as initialProjects, projectStatuses, Project, ProjectStatus, teamMembers, TeamMember } from '@/lib/data';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { CalendarIcon, PlusCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Helper to reorder lists
 const reorder = (list: any[], startIndex: number, endIndex: number) => {
@@ -75,6 +81,24 @@ export default function TimelinePage() {
     }
   };
 
+  const handleAssigneeChange = (projectId: number, memberId: number) => {
+    const newProjectData = { ...projectData };
+    for (const status in newProjectData) {
+        const projectIndex = newProjectData[status as ProjectStatus].findIndex(p => p.id === projectId);
+        if (projectIndex !== -1) {
+            const project = newProjectData[status as ProjectStatus][projectIndex];
+            const currentAssignees = project.assignees || [];
+            if (currentAssignees.includes(memberId)) {
+                project.assignees = currentAssignees.filter(id => id !== memberId);
+            } else {
+                project.assignees = [...currentAssignees, memberId];
+            }
+            break;
+        }
+    }
+    setProjectData(newProjectData);
+  };
+
   return (
     <div className="space-y-8 font-headline">
       <header>
@@ -110,12 +134,62 @@ export default function TimelinePage() {
                             >
                               <Card className={cn("border-4 border-black", snapshot.isDragging && "border-primary")}>
                                 <CardHeader>
-                                  <CardTitle className="text-xl font-bold tracking-tight">{project.title}</CardTitle>
+                                  <Badge variant="outline" className="w-fit">{project.client}</Badge>
+                                  <CardTitle className="text-xl font-bold tracking-tight pt-2">{project.title}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                  <p className="text-sm font-bold text-muted-foreground">{project.client}</p>
-                                  <p className="mt-2 text-sm">{project.description}</p>
+                                  <p className="text-sm text-muted-foreground">{project.description}</p>
                                 </CardContent>
+                                <CardFooter className="flex-col items-start gap-4">
+                                  {project.dueDate && (
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                                      <CalendarIcon className="h-4 w-4" />
+                                      <span>{new Date(project.dueDate).toLocaleDateString()}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center justify-between w-full">
+                                    <div className="flex -space-x-2">
+                                        <TooltipProvider>
+                                        {project.assignees?.map(assigneeId => {
+                                            const member = teamMembers.find(m => m.id === assigneeId);
+                                            return member ? (
+                                                <Tooltip key={member.id}>
+                                                    <TooltipTrigger asChild>
+                                                        <Avatar className="border-2 border-background">
+                                                            <AvatarImage src={member.avatarUrl} />
+                                                            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>{member.name}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            ) : null;
+                                        })}
+                                        </TooltipProvider>
+                                    </div>
+                                    
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                          <PlusCircle className="h-5 w-5" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        {teamMembers.map(member => (
+                                          <DropdownMenuCheckboxItem
+                                            key={member.id}
+                                            checked={project.assignees?.includes(member.id)}
+                                            onSelect={(e) => e.preventDefault()} // prevent closing
+                                            onCheckedChange={() => handleAssigneeChange(project.id, member.id)}
+                                          >
+                                            {member.name}
+                                          </DropdownMenuCheckboxItem>
+                                        ))}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </CardFooter>
                               </Card>
                             </div>
                           )}
