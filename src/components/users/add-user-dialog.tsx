@@ -22,6 +22,7 @@ import type { User } from "@/lib/data";
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters."}),
   role: z.enum(['admin', 'staff']),
 });
 
@@ -38,6 +39,7 @@ export function AddUserDialog({ isOpen, setIsOpen, onAddUser, children }: AddUse
     defaultValues: {
       name: "",
       email: "",
+      password: "",
       role: "staff",
     },
   });
@@ -83,6 +85,19 @@ export function AddUserDialog({ isOpen, setIsOpen, onAddUser, children }: AddUse
                         <FormLabel className="text-base font-bold">EMAIL</FormLabel>
                         <FormControl>
                             <Input type="email" placeholder="user@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="text-base font-bold">PASSWORD</FormLabel>
+                        <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>

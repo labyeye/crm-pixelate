@@ -3,8 +3,8 @@
 // This is a global state hack for demo purposes.
 // In a real app, you'd use a proper state management solution or a database.
 let usersStore: User[] = [
-    { id: 1, name: 'Admin User', email: 'admin@pixelate.com', role: 'admin'},
-    { id: 2, name: 'Staff User', email: 'staff@pixelate.com', role: 'staff'},
+    { id: 1, name: 'Admin User', email: 'admin@pixelate.com', role: 'admin', password: 'password'},
+    { id: 2, name: 'Staff User', email: 'staff@pixelate.com', role: 'staff', password: 'password'},
 ];
 
 if (typeof window !== 'undefined' && !(window as any).__usersStore) {
@@ -73,6 +73,7 @@ export interface User {
     name: string;
     email: string;
     role: 'admin' | 'staff';
+    password?: string;
     avatarUrl?: string;
 }
 
@@ -117,7 +118,7 @@ export interface Project {
     client: string;
     progress: number;
     description: string;
-    status: ProjectStatus;
+    status?: ProjectStatus;
 }
 
 export const projects: Project[] = [
