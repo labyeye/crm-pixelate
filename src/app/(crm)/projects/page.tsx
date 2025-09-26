@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { projects as initialProjects, Project } from "@/lib/data";
@@ -21,15 +21,22 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>(projectsStore);
 
   // This effect will sync the state with the global store.
-  // This is needed because Next.js can re-render the page without a full reload.
-  useState(() => {
-    const interval = setInterval(() => {
+  // This is needed because Next.js can re-render the page without a full reload,
+  // and it prevents hydration errors by running only on the client.
+  useEffect(() => {
+    const syncProjects = () => {
       if ((window as any).__projectsStore !== projects) {
-        setProjects((window as any).__projectsStore);
+        setProjects([...(window as any).__projectsStore]);
       }
-    }, 500);
+    };
+    
+    // Initial sync
+    syncProjects();
+
+    // Set up an interval to check for changes from other pages.
+    const interval = setInterval(syncProjects, 500);
     return () => clearInterval(interval);
-  });
+  }, [projects]);
 
 
   return (

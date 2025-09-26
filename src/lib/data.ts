@@ -25,7 +25,10 @@ export interface User {
 export const users: User[] = usersStore;
 
 export const addUser = (user: Omit<User, 'id'>): User => {
-    const newUser = { ...user, id: new Date().getTime() };
+    const newId = (typeof window !== 'undefined' && (window as any).__usersStore) 
+        ? (window as any).__usersStore.reduce((maxId: number, u: User) => Math.max(u.id, maxId), 0) + 1 
+        : new Date().getTime();
+    const newUser = { ...user, id: newId };
     if (typeof window !== 'undefined') {
         (window as any).__usersStore.push(newUser);
     }
@@ -163,7 +166,10 @@ if (typeof window !== 'undefined' && !(window as any).__servicesStore) {
 }
 
 export const addService = (service: Omit<Service, 'id'>): Service => {
-    const newService = { ...service, id: new Date().getTime() };
+    const newId = (typeof window !== 'undefined' && (window as any).__servicesStore)
+        ? (window as any).__servicesStore.reduce((maxId: number, s: Service) => Math.max(s.id, maxId), 0) + 1
+        : new Date().getTime();
+    const newService = { ...service, id: newId };
     if (typeof window !== 'undefined') {
         (window as any).__servicesStore.push(newService);
     }
