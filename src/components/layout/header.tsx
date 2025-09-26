@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -7,34 +8,41 @@ import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/leads', label: 'Leads' },
-  { href: '/quotations', label: 'Quotations' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/invoicing', label: 'Invoicing' },
-  { href: '/support', label: 'Support' },
+  { href: '/dashboard', label: 'Dashboard', adminOnly: false },
+  { href: '/leads', label: 'Leads', adminOnly: false },
+  { href: '/quotations', label: 'Quotations', adminOnly: false },
+  { href: '/projects', label: 'Projects', adminOnly: false },
+  { href: '/invoicing', label: 'Invoicing', adminOnly: true },
+  { href: '/users', label: 'Users', adminOnly: true },
+  { href: '/support', label: 'Support', adminOnly: false },
 ];
 
 
 function NavLinks() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   return (
     <>
       {navItems.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={cn(
-            "block rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
-            pathname.startsWith(item.href)
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-background text-foreground hover:bg-foreground hover:text-background'
-          )}
-        >
-          {item.label}
-        </Link>
+         (item.adminOnly && !isAdmin) ? null : (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "block rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
+              pathname.startsWith(item.href)
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background text-foreground hover:bg-foreground hover:text-background'
+            )}
+          >
+            {item.label}
+          </Link>
+        )
       ))}
     </>
   );

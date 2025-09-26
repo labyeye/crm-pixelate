@@ -1,4 +1,19 @@
 
+
+// This is a global state hack for demo purposes.
+// In a real app, you'd use a proper state management solution or a database.
+let usersStore: User[] = [
+    { id: 1, name: 'Admin User', email: 'admin@pixelate.com', role: 'admin'},
+    { id: 2, name: 'Staff User', email: 'staff@pixelate.com', role: 'staff'},
+];
+
+if (typeof window !== 'undefined' && !(window as any).__usersStore) {
+    (window as any).__usersStore = usersStore;
+} else if (typeof window !== 'undefined') {
+    usersStore = (window as any).__usersStore;
+}
+
+
 export interface User {
     id: number;
     name: string;
@@ -7,10 +22,16 @@ export interface User {
     avatarUrl?: string;
 }
 
-export const users: User[] = [
-    { id: 1, name: 'Admin User', email: 'admin@pixelate.com', role: 'admin'},
-    { id: 2, name: 'Staff User', email: 'staff@pixelate.com', role: 'staff'},
-];
+export const users: User[] = usersStore;
+
+export const addUser = (user: Omit<User, 'id'>): User => {
+    const newUser = { ...user, id: new Date().getTime() };
+    if (typeof window !== 'undefined') {
+        (window as any).__usersStore.push(newUser);
+    }
+    return newUser;
+}
+
 
 export interface Lead {
   id: number;

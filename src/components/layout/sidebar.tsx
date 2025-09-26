@@ -10,12 +10,13 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/leads', label: 'Leads' },
-  { href: '/quotations', label: 'Quotations' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/invoicing', label: 'Invoicing' },
-  { href: '/support', label: 'Support' },
+  { href: '/dashboard', label: 'Dashboard', adminOnly: false },
+  { href: '/leads', label: 'Leads', adminOnly: false },
+  { href: '/quotations', label: 'Quotations', adminOnly: false },
+  { href: '/projects', label: 'Projects', adminOnly: false },
+  { href: '/invoicing', label: 'Invoicing', adminOnly: true },
+  { href: '/users', label: 'Users', adminOnly: true },
+  { href: '/support', label: 'Support', adminOnly: false },
 ];
 
 const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
@@ -37,6 +38,8 @@ export function Sidebar() {
         </aside>
     );
   }
+  
+  const isAdmin = user?.role === 'admin';
 
   return (
     <aside className="hidden md:flex md:w-60 lg:w-72 flex-col fixed inset-y-0 z-10 border-r-2 border-black bg-background">
@@ -48,18 +51,20 @@ export function Sidebar() {
       </div>
       <nav className="flex-1 p-6 space-y-2">
         {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "block rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
-              pathname.startsWith(item.href)
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-background text-foreground hover:bg-foreground hover:text-background'
-            )}
-          >
-            {item.label}
-          </Link>
+          (item.adminOnly && !isAdmin) ? null : (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "block rounded-none border-2 border-foreground p-3 text-base font-bold transition-colors",
+                pathname.startsWith(item.href)
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-foreground hover:bg-foreground hover:text-background'
+              )}
+            >
+              {item.label}
+            </Link>
+          )
         ))}
       </nav>
       <div className="p-6 border-t-2 border-black">
