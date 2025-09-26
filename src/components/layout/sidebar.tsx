@@ -25,16 +25,11 @@ const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  }
-
   if (!user) {
-    // Or a loading spinner
+    // This case should be handled by the AuthProvider's loading state,
+    // but as a fallback, we render an empty sidebar.
     return (
         <aside className="hidden md:flex md:w-60 lg:w-72 flex-col fixed inset-y-0 z-10 border-r-2 border-black bg-background">
         </aside>
@@ -81,7 +76,7 @@ export function Sidebar() {
             <div>
                 <p className="font-bold">{user.name}</p>
                 <p className="text-sm text-muted-foreground uppercase">{user.role}</p>
-                 <button onClick={handleLogout} className="text-sm text-muted-foreground hover:text-primary underline">
+                 <button onClick={logout} className="text-sm text-muted-foreground hover:text-primary underline">
                   Logout
                 </button>
             </div>

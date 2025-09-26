@@ -24,24 +24,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    const storedUserId = sessionStorage.getItem('userId');
-    if (storedUserId) {
-      const foundUser = users.find(u => u.id === parseInt(storedUserId, 10));
-      if (foundUser) {
-        setUser(foundUser);
-      } else {
-        sessionStorage.removeItem('userId');
-        if (!publicRoutes.includes(pathname)) {
-            router.push('/login');
+    try {
+      const storedUserId = sessionStorage.getItem('userId');
+      if (storedUserId) {
+        const foundUser = users.find(u => u.id === parseInt(storedUserId, 10));
+        if (foundUser) {
+          setUser(foundUser);
         }
       }
-    } else {
-        if (!publicRoutes.includes(pathname)) {
-            router.push('/login');
-        }
+    } catch (e) {
+      console.error("Could not access session storage.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [router, pathname]);
+  }, []);
+
+  useEffect(() => {
+    if (!loading && !user && !publicRoutes.includes(pathname)) {
+      router.push('/login');
+    }
+  }, [loading, user, pathname, router]);
 
   const login = (userId: number) => {
     const foundUser = users.find(u => u.id === userId);
@@ -56,17 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUser(null);
     sessionStorage.removeItem('userId');
+    router.push('/login');
   };
   
   if (loading) {
-    return null; 
-  }
-
-  // If not authenticated and trying to access a protected route, redirect to login.
-  if (!user && !publicRoutes.includes(pathname) && pathname !== '/') {
-      // This is a safeguard. The useEffect should handle redirection.
-      // But if it renders before effect runs, this can prevent flashing protected content.
-      return null;
+    return null; // Don't render anything until client-side check is complete
   }
 
   return (
