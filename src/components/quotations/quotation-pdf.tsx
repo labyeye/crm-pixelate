@@ -1,7 +1,11 @@
 
-import type { Quotation } from '@/lib/data';
+import type { Quotation, Client } from '@/lib/data';
+import { clients } from '@/lib/data';
 
 export function QuotationPDF({ quote }: { quote: Quotation }) {
+  const client = clients.find(c => c.id === quote.clientId);
+  if (!client) return <div>Client not found</div>;
+    
   const subtotal = quote.amount;
   const discount = quote.discount || 0;
   const total = subtotal - discount;
@@ -24,17 +28,17 @@ export function QuotationPDF({ quote }: { quote: Quotation }) {
 
       <div style={{ marginTop: '40px' }}>
         <h2 style={{ fontSize: '16px', fontWeight: 'bold', borderBottom: '1px solid #ccc', paddingBottom: '5px' }}>BILLED TO</h2>
-        <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '10px 0 0 0' }}>{quote.clientName}</p>
-        <p style={{ fontSize: '14px', margin: '5px 0 0 0' }}>{quote.clientAddress}</p>
-        <p style={{ fontSize: '14px', margin: '5px 0 0 0' }}>{quote.clientEmail} | {quote.clientPhone}</p>
+        <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '10px 0 0 0' }}>{client.name}</p>
+        <p style={{ fontSize: '14px', margin: '5px 0 0 0' }}>{client.address}</p>
+        <p style={{ fontSize: '14px', margin: '5px 0 0 0' }}>{client.email} | {client.phone}</p>
       </div>
 
-      {quote.hasGst && (
+      {client.hasGst && (
         <div style={{ marginTop: '20px' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 'bold', borderBottom: '1px solid #ccc', paddingBottom: '5px' }}>GST DETAILS</h2>
-          <p style={{ fontSize: '14px', margin: '10px 0 0 0' }}><strong>Company:</strong> {quote.gstCompanyName}</p>
-          <p style={{ fontSize: '14px', margin: '5px 0 0 0' }}><strong>GSTIN:</strong> {quote.gstNumber}</p>
-          <p style={{ fontSize: '14px', margin: '5px 0 0 0' }}><strong>Address:</strong> {quote.gstAddress}</p>
+          <p style={{ fontSize: '14px', margin: '10px 0 0 0' }}><strong>Company:</strong> {client.gstCompanyName}</p>
+          <p style={{ fontSize: '14px', margin: '5px 0 0 0' }}><strong>GSTIN:</strong> {client.gstNumber}</p>
+          <p style={{ fontSize: '14px', margin: '5px 0 0 0' }}><strong>Address:</strong> {client.gstAddress}</p>
         </div>
       )}
 

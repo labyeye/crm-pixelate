@@ -3,10 +3,8 @@
 
 import { useState } from "react";
 import jsPDF from "jspdf";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { quotations as initialQuotations, Quotation, Project, users } from "@/lib/data";
+import { quotations as initialQuotations, Quotation, Project, users, clients } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { AddQuotationDialog } from "@/components/quotations/add-quotation-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -29,14 +27,18 @@ export default function QuotationsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const addQuotation = (newQuoteData: Omit<Quotation, 'id' | 'status' | 'authorId'>) => {
+  const addQuotation = (newQuoteData: Omit<Quotation, 'id' | 'status' | 'authorId' | 'clientName'>) => {
     if (!user) return;
+    const client = clients.find(c => c.id === newQuoteData.clientId);
+    if (!client) return;
+      
     const newId = `Q-${new Date().getFullYear()}-${(quotations.length + 1).toString().padStart(3, '0')}`;
     const newQuotation: Quotation = {
       ...newQuoteData,
       id: newId,
       status: 'PENDING',
       authorId: user.id,
+      clientName: client.name,
     };
     setQuotations(prev => [newQuotation, ...prev]);
   };

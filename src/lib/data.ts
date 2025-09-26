@@ -13,6 +13,60 @@ if (typeof window !== 'undefined' && !(window as any).__usersStore) {
     usersStore = (window as any).__usersStore;
 }
 
+export interface Client {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    hasGst: boolean;
+    gstCompanyName?: string;
+    gstNumber?: string;
+    gstAddress?: string;
+}
+
+// This is a global state hack for demo purposes.
+let clientsStore: Client[] = [
+    { 
+        id: 1, 
+        name: 'Apex Digital', 
+        email: 'contact@apex.co', 
+        address: '123 Tech Park, Silicon Valley', 
+        phone: '123-456-7890', 
+        hasGst: false 
+    },
+    { 
+        id: 2, 
+        name: 'Nexus Innovations', 
+        email: 'info@nexus.io', 
+        address: '456 Future Drive, Innovation City', 
+        phone: '098-765-4321', 
+        hasGst: true, 
+        gstCompanyName: 'Nexus Innovations LLC', 
+        gstNumber: 'GSTIN123456', 
+        gstAddress: '456 Future Drive, Innovation City' 
+    },
+];
+
+if (typeof window !== 'undefined' && !(window as any).__clientsStore) {
+    (window as any).__clientsStore = clientsStore;
+} else if (typeof window !== 'undefined') {
+    clientsStore = (window as any).__clientsStore;
+}
+
+export const clients: Client[] = clientsStore;
+
+export const addClient = (client: Omit<Client, 'id'>): Client => {
+    const newId = (typeof window !== 'undefined' && (window as any).__clientsStore)
+        ? (window as any).__clientsStore.reduce((maxId: number, c: Client) => Math.max(c.id, maxId), 0) + 1
+        : new Date().getTime();
+    const newClient = { ...client, id: newId };
+    if (typeof window !== 'undefined') {
+        (window as any).__clientsStore.push(newClient);
+    }
+    return newClient;
+};
+
 
 export interface User {
     id: number;
@@ -73,14 +127,8 @@ export const projects: Project[] = [
 export interface Quotation {
     id: string;
     status: 'APPROVED' | 'PENDING' | 'REJECTED';
+    clientId: number;
     clientName: string;
-    clientEmail: string;
-    clientPhone: string;
-    clientAddress: string;
-    hasGst: boolean;
-    gstCompanyName?: string;
-    gstNumber?: string;
-    gstAddress?: string;
     services: { id: number; name: string }[];
     amount: number;
     discount: number;
@@ -91,31 +139,22 @@ export interface Quotation {
 export const quotations: Quotation[] = [
   { 
     id: 'Q-2024-001', 
+    clientId: 1,
     clientName: 'Apex Digital',
-    clientEmail: 'contact@apex.co',
-    clientAddress: '123 Tech Park, Silicon Valley',
-    clientPhone: '123-456-7890',
     amount: 250000, 
     status: 'APPROVED', 
     services: [{id: 1, name: 'Web Development'}, {id: 2, name: 'UX/UI Design'}],
-    hasGst: false,
     discount: 0,
     deliveryDate: new Date('2024-09-30'),
     authorId: 1,
   },
   { 
     id: 'Q-2024-002', 
+    clientId: 2,
     clientName: 'Nexus Innovations',
-    clientEmail: 'info@nexus.io',
-    clientAddress: '456 Future Drive, Innovation City',
-    clientPhone: '098-765-4321',
     amount: 95000, 
     status: 'PENDING', 
     services: [{id: 3, name: 'Cloud Consulting'}],
-    hasGst: true,
-    gstCompanyName: 'Nexus Innovations LLC',
-    gstNumber: 'GSTIN123456',
-    gstAddress: '456 Future Drive, Innovation City',
     discount: 5000,
     deliveryDate: new Date('2024-08-15'),
     authorId: 2,
@@ -150,7 +189,7 @@ export interface Service {
     name: string;
 }
 
-export const services: Service[] = [
+let servicesStore: Service[] = [
     { id: 1, name: 'Web Development' },
     { id: 2, name: 'UX/UI Design' },
     { id: 3, name: 'Cloud Consulting' },
@@ -160,10 +199,12 @@ export const services: Service[] = [
 
 // This is a global state hack for demo purposes.
 if (typeof window !== 'undefined' && !(window as any).__servicesStore) {
-    (window as any).__servicesStore = services;
+    (window as any).__servicesStore = servicesStore;
 } else if (typeof window !== 'undefined') {
-    (window as any).__servicesStore = (window as any).__servicesStore.length ? (window as any).__servicesStore : services;
+    servicesStore = (window as any).__servicesStore.length ? (window as any).__servicesStore : servicesStore;
 }
+export const services: Service[] = servicesStore;
+
 
 export const addService = (service: Omit<Service, 'id'>): Service => {
     const newId = (typeof window !== 'undefined' && (window as any).__servicesStore)

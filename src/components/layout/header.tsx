@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, Code } from 'lucide-react';
+import { Menu, Code, Users } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/use-auth';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', adminOnly: false },
   { href: '/leads', label: 'Leads', adminOnly: false },
+  { href: '/clients', label: 'Clients', adminOnly: false, icon: Users },
   { href: '/quotations', label: 'Quotations', adminOnly: false },
   { href: '/projects', label: 'Projects', adminOnly: false },
   { href: '/invoicing', label: 'Invoicing', adminOnly: true },

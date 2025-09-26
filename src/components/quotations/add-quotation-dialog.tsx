@@ -15,11 +15,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import type { Quotation, Service } from "@/lib/data";
-import { services as allServices } from "@/lib/data";
-import { Switch } from "@/components/ui/switch";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import type { Quotation, Service, Client } from "@/lib/data";
+import { services as allServices, clients as allClients } from "@/lib/data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -29,35 +27,21 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import { ScrollArea } from "../ui/scroll-area";
 import React from "react";
 import { Separator } from "../ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 
 const formSchema = z.object({
-  clientName: z.string().min(2, "Client name is required."),
-  clientEmail: z.string().email("Invalid email address."),
-  clientPhone: z.string().min(10, "Invalid phone number."),
-  clientAddress: z.string().min(5, "Address is required."),
-  hasGst: z.boolean().default(false),
-  gstCompanyName: z.string().optional(),
-  gstNumber: z.string().optional(),
-  gstAddress: z.string().optional(),
+  clientId: z.coerce.number({required_error: "Please select a client."}).positive("Please select a client."),
   services: z.array(z.object({ id: z.number(), name: z.string() })).min(1, "At least one service is required."),
   amount: z.coerce.number().positive("Amount must be positive."),
   discount: z.coerce.number().min(0, "Discount cannot be negative.").default(0),
   deliveryDate: z.date({ required_error: "A delivery date is required."}),
-}).refine(data => {
-    if (data.hasGst) {
-        return !!data.gstCompanyName && !!data.gstNumber && !!data.gstAddress;
-    }
-    return true;
-}, {
-    message: "GST details are required when toggled on.",
-    path: ["gstCompanyName"], // you can pick any of the dependent fields
 });
 
 type AddQuotationDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onAddQuotation: (newQuote: Omit<Quotation, 'id' | 'status' | 'authorId'>) => void;
+  onAddQuotation: (newQuote: Omit<Quotation, 'id' | 'status' | 'authorId' | 'clientName'>) => void;
   children: React.ReactNode;
 };
 
@@ -65,18 +49,11 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      clientName: "",
-      clientEmail: "",
-      clientPhone: "",
-      clientAddress: "",
-      hasGst: false,
       services: [],
       amount: 0,
       discount: 0,
     },
   });
-
-  const hasGst = form.watch("hasGst");
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     onAddQuotation(values);
@@ -89,7 +66,7 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="font-headline text-3xl font-black tracking-tighter">New Quotation</DialogTitle>
           <DialogDescription>
@@ -100,20 +77,31 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <ScrollArea className="h-[60vh] pr-6">
                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="clientName" render={({ field }) => (
-                            <FormItem><FormLabel>Client Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="clientEmail" render={({ field }) => (
-                            <FormItem><FormLabel>Client Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="clientPhone" render={({ field }) => (
-                            <FormItem><FormLabel>Client Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="clientAddress" render={({ field }) => (
-                           <FormItem className="md:col-span-2"><FormLabel>Client Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="clientId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a client" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {allClients.map(client => (
+                                <SelectItem key={client.id} value={client.id.toString()}>
+                                  {client.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
                     <Separator className="border-t-2 border-black" />
 
@@ -190,33 +178,6 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
                             </FormItem>
                         )} />
                     </div>
-
-                    <Separator className="border-t-2 border-black" />
-
-                    <div className="space-y-4">
-                        <FormField control={form.control} name="hasGst" render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                <div className="space-y-0.5">
-                                    <FormLabel className="text-base">Apply GST</FormLabel>
-                                    <FormDescription>Include GST details in the quotation.</FormDescription>
-                                </div>
-                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                            </FormItem>
-                        )} />
-                        {hasGst && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4">
-                                <FormField control={form.control} name="gstCompanyName" render={({ field }) => (
-                                    <FormItem className="md:col-span-2"><FormLabel>GST Company Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="gstNumber" render={({ field }) => (
-                                    <FormItem><FormLabel>GST Number</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="gstAddress" render={({ field }) => (
-                                    <FormItem><FormLabel>GST Address</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                            </div>
-                        )}
-                    </div>
                 </div>
               </ScrollArea>
               <DialogFooter className="pt-8">
@@ -228,5 +189,3 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
     </Dialog>
   );
 }
-
-    

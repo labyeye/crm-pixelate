@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useAuth } from '@/hooks/use-auth';
-import { Code, Bot } from 'lucide-react';
+import { Code, Bot, Users } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', adminOnly: false },
   { href: '/leads', label: 'Leads', adminOnly: false },
+  { href: '/clients', label: 'Clients', adminOnly: false, icon: Users },
   { href: '/quotations', label: 'Quotations', adminOnly: false },
   { href: '/projects', label: 'Projects', adminOnly: false },
   { href: '/invoicing', label: 'Invoicing', adminOnly: true },
