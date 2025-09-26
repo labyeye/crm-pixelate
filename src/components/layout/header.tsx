@@ -5,21 +5,21 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu, Code, Users } from 'lucide-react';
+import { Menu, Code, Users, LayoutDashboard, KanbanSquare, FileText, Briefcase, Receipt, LifeBuoy } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', adminOnly: false },
-  { href: '/leads', label: 'Leads', adminOnly: false },
+  { href: '/dashboard', label: 'Dashboard', adminOnly: false, icon: LayoutDashboard },
+  { href: '/leads', label: 'Leads', adminOnly: false, icon: KanbanSquare },
   { href: '/clients', label: 'Clients', adminOnly: false, icon: Users },
-  { href: '/quotations', label: 'Quotations', adminOnly: false },
-  { href: '/projects', label: 'Projects', adminOnly: false },
-  { href: '/invoicing', label: 'Invoicing', adminOnly: true },
-  { href: '/users', label: 'Users', adminOnly: true },
+  { href: '/quotations', label: 'Quotations', adminOnly: false, icon: FileText },
+  { href: '/projects', label: 'Projects', adminOnly: false, icon: Briefcase },
+  { href: '/invoicing', label: 'Invoicing', adminOnly: true, icon: Receipt },
+  { href: '/users', label: 'Users', adminOnly: true, icon: Users },
   { href: '/services', label: 'Services', adminOnly: true, icon: Code },
-  { href: '/support', label: 'Support', adminOnly: false },
+  { href: '/support', label: 'Support', adminOnly: false, icon: LifeBuoy },
 ];
 
 
