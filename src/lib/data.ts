@@ -1,4 +1,17 @@
 
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+    role: 'admin' | 'staff';
+    avatarUrl?: string;
+}
+
+export const users: User[] = [
+    { id: 1, name: 'Admin User', email: 'admin@pixelate.com', role: 'admin'},
+    { id: 2, name: 'Staff User', email: 'staff@pixelate.com', role: 'staff'},
+];
+
 export interface Lead {
   id: number;
   name: string;

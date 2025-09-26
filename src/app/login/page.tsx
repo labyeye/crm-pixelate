@@ -1,10 +1,25 @@
-import Link from "next/link";
+
+'use client';
+
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/use-auth";
+import { users } from "@/lib/data";
 
 export default function LoginPage() {
+    const router = useRouter();
+    const { login } = useAuth();
+
+    const handleLogin = (userId: number) => {
+        if (login(userId)) {
+            router.push('/dashboard');
+        } else {
+            // Handle failed login, e.g., show an error message
+            alert("Login failed: User not found");
+        }
+    };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 font-headline">
       <Card className="w-full max-w-md border-4 border-black">
@@ -12,23 +27,21 @@ export default function LoginPage() {
           <CardTitle className="text-5xl font-black tracking-tighter">PIXELATE NEST</CardTitle>
           <CardDescription className="text-lg font-bold text-muted-foreground">AGENCY CRM LOGIN</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-base font-bold">EMAIL</Label>
-            <Input id="email" type="email" placeholder="your@email.com" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-base font-bold">PASSWORD</Label>
-            <Input id="password" type="password" placeholder="••••••••" required />
-          </div>
-          <Link href="/dashboard">
-            <Button type="submit" className="w-full h-14 text-xl font-bold">
-              LOG IN
-            </Button>
-          </Link>
-          <p className="text-center text-sm text-muted-foreground">
-            This is a demo. <Link href="/dashboard" className="underline font-bold hover:text-primary">Click here to continue</Link>.
-          </p>
+        <CardContent className="space-y-4">
+            <p className="text-center text-muted-foreground">Select a user to log in as:</p>
+            <div className="flex flex-col gap-4">
+                {users.map(user => (
+                    <Button 
+                        key={user.id}
+                        onClick={() => handleLogin(user.id)}
+                        variant="outline"
+                        className="w-full h-16 text-xl font-bold flex justify-between items-center"
+                    >
+                        <span>{user.name}</span>
+                        <span className="text-sm font-normal uppercase bg-muted text-muted-foreground px-2 py-1">{user.role}</span>
+                    </Button>
+                ))}
+            </div>
         </CardContent>
       </Card>
     </div>

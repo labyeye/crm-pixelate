@@ -1,11 +1,13 @@
+
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -20,6 +22,21 @@ const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  }
+
+  if (!user) {
+    // Or a loading spinner
+    return (
+        <aside className="hidden md:flex md:w-60 lg:w-72 flex-col fixed inset-y-0 z-10 border-r-2 border-black bg-background">
+        </aside>
+    );
+  }
 
   return (
     <aside className="hidden md:flex md:w-60 lg:w-72 flex-col fixed inset-y-0 z-10 border-r-2 border-black bg-background">
@@ -49,13 +66,16 @@ export function Sidebar() {
         <div className="flex items-center gap-4">
             <Avatar className="h-12 w-12 border-2 border-black rounded-none">
                 {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User Avatar" />}
-                <AvatarFallback className="rounded-none bg-accent text-accent-foreground font-bold">AU</AvatarFallback>
+                <AvatarFallback className="rounded-none bg-accent text-accent-foreground font-bold">
+                    {user?.name?.charAt(0).toUpperCase() ?? 'U'}
+                </AvatarFallback>
             </Avatar>
             <div>
-                <p className="font-bold">Admin User</p>
-                <Link href="/login" className="text-sm text-muted-foreground hover:text-primary underline">
+                <p className="font-bold">{user.name}</p>
+                <p className="text-sm text-muted-foreground uppercase">{user.role}</p>
+                 <button onClick={handleLogout} className="text-sm text-muted-foreground hover:text-primary underline">
                   Logout
-                </Link>
+                </button>
             </div>
         </div>
       </div>
