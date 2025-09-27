@@ -1,13 +1,33 @@
 
 import type { Quotation, Client } from '@/lib/data';
-import { clients } from '@/lib/data';
+import React, { useEffect, useState } from 'react';
 
-export function QuotationPDF({ quote }: { quote: Quotation }) {
-  const client = clients.find(c => c.id === quote.clientId);
+export function QuotationPDF({ quote, client: initialClient }: { quote: Quotation; client?: Client }) {
+  const [client, setClient] = useState<Client | undefined>(initialClient);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!client && quote.clientId) {
+      (async () => {
+        try {
+          const res = await fetch(`/api/clients/${quote.clientId}`);
+          if (!mounted) return;
+          if (res.ok) {
+            const data = await res.json();
+            setClient(data);
+          }
+        } catch (e) {
+          // ignore
+        }
+      })();
+    }
+    return () => { mounted = false; };
+  }, [quote.clientId, client]);
+
   if (!client) return <div>Client not found</div>;
-    
-  const subtotal = quote.amount;
-  const discount = quote.discount || 0;
+
+  const subtotal = quote.amount ?? 0;
+  const discount = quote.discount ?? 0;
   const total = subtotal - discount;
 
   return (
@@ -22,7 +42,7 @@ export function QuotationPDF({ quote }: { quote: Quotation }) {
         <div>
           <p style={{ margin: '0', textAlign: 'right' }}><strong>Quotation ID:</strong> {quote.id}</p>
           <p style={{ margin: '5px 0 0 0', textAlign: 'right' }}><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
-          <p style={{ margin: '5px 0 0 0', textAlign: 'right' }}><strong>Delivery Date:</strong> {new Date(quote.deliveryDate).toLocaleDateString()}</p>
+          <p style={{ margin: '5px 0 0 0', textAlign: 'right' }}><strong>Delivery Date:</strong> {quote.deliveryDate ? new Date(quote.deliveryDate).toLocaleDateString() : ''}</p>
         </div>
       </div>
 
@@ -51,7 +71,7 @@ export function QuotationPDF({ quote }: { quote: Quotation }) {
             </tr>
           </thead>
           <tbody>
-            {quote.services.map((service, index) => (
+            {(quote.services ?? []).map((service, index) => (
               <tr key={index}>
                 <td style={{ border: '1px solid black', padding: '10px', fontSize: '16px' }}>{service.name}</td>
                 <td style={{ border: '1px solid black', padding: '10px', fontSize: '16px' }}>Custom scope for {service.name}</td>

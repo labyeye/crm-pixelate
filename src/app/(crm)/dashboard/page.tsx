@@ -1,8 +1,10 @@
 
 "use client";
 
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { stats, projects, invoices, leads, quotations, services } from "@/lib/data";
+import type { Project, Quotation } from '@/lib/data';
+import type { Client } from '@/lib/data';
 import { cn } from "@/lib/utils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,49 +22,94 @@ const chartData = [
   { month: 'Jun', revenue: 8000 },
 ];
 
-const projectStatusCounts = projects.reduce((acc, project) => {
-  const status = project.status || 'BACKLOG';
-  acc[status] = (acc[status] || 0) + 1;
-  return acc;
-}, {} as Record<string, number>);
-
-const projectChartData = Object.keys(projectStatusCounts).map(status => ({
-  status,
-  count: projectStatusCounts[status],
-  fill: `hsl(var(--chart-${Object.keys(projectStatusCounts).indexOf(status) + 1}))`
-}));
-
 const projectChartConfig = {
-  count: {
-    label: "Projects",
-  },
-  "BACKLOG": { label: "Backlog", color: "hsl(var(--chart-1))" },
-  "IN PROGRESS": { label: "In Progress", color: "hsl(var(--chart-2))" },
-  "IN REVIEW": { label: "In Review", color: "hsl(var(--chart-3))" },
-  "COMPLETED": { label: "Completed", color: "hsl(var(--chart-4))" },
+    count: {
+        label: "Projects",
+    },
+    "BACKLOG": { label: "Backlog", color: "hsl(var(--chart-1))" },
+    "IN PROGRESS": { label: "In Progress", color: "hsl(var(--chart-2))" },
+    "IN REVIEW": { label: "In Review", color: "hsl(var(--chart-3))" },
+    "COMPLETED": { label: "Completed", color: "hsl(var(--chart-4))" },
 };
-
-const leadsByStatus = leads.reduce((acc, lead) => {
-    acc[lead.status] = (acc[lead.status] || 0) + 1;
-    return acc;
-}, {} as Record<string, number>);
-
-const serviceUsageCounts = quotations
-  .filter(q => q.status === 'APPROVED')
-  .flatMap(q => q.services)
-  .reduce((acc, service) => {
-    acc[service.name] = (acc[service.name] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-const serviceChartData = Object.entries(serviceUsageCounts)
-    .map(([service, count]) => ({ service, count }))
-    .sort((a, b) => b.count - a.count);
 
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
+
+    const [stats, setStats] = useState<any[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [leads, setLeads] = useState<any[]>([]);
+    const [quotations, setQuotations] = useState<Quotation[]>([]);
+    const [services, setServices] = useState<any[]>([]);
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const [projectsRes, invoicesRes, leadsRes, quotationsRes, servicesRes] = await Promise.all([
+                    fetch('/api/projects'),
+                    fetch('/api/invoices'),
+                    fetch('/api/leads'),
+                    fetch('/api/quotations'),
+                    fetch('/api/services')
+                ]);
+                const [projectsData, invoicesData, leadsData, quotationsData, servicesData] = await Promise.all([
+                    projectsRes.json(), invoicesRes.json(), leadsRes.json(), quotationsRes.json(), servicesRes.json()
+                ]);
+                if (!mounted) return;
+                setProjects(projectsData || []);
+                setInvoices(invoicesData || []);
+                setLeads(leadsData || []);
+                setQuotations(quotationsData || []);
+                setServices(servicesData || []);
+
+                // Simple derived stats
+                setStats([
+                    { name: 'projects', value: (projectsData || []).length, change: '+2.4%', changeType: 'positive' },
+                    { name: 'clients', value:  (await (await fetch('/api/clients')).json()).length || 0, change: '+1.1%', changeType: 'positive' },
+                    { name: 'invoices', value: (invoicesData || []).length, change: '-0.8%', changeType: 'negative' },
+                    { name: 'leads', value: (leadsData || []).length, change: '+3.2%', changeType: 'positive' }
+                ]);
+            } catch (e) {
+                console.error('Failed to load dashboard data', e);
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
+
+    const projectStatusCounts = projects.reduce((acc, project) => {
+        const status = project.status || 'BACKLOG';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const projectChartData = Object.keys(projectStatusCounts).map(status => ({
+        status,
+        count: projectStatusCounts[status],
+        fill: `hsl(var(--chart-${Object.keys(projectStatusCounts).indexOf(status) + 1}))`
+    }));
+
+    const leadsByStatus = leads.reduce((acc, lead) => {
+        const key = lead.status ?? 'NEW';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const serviceUsageCounts = quotations
+        .filter(q => q.status === 'APPROVED')
+        .flatMap(q => q.services ?? [])
+        .reduce((acc, service) => {
+            if (!service) return acc;
+            const name = service.name ?? 'Unknown';
+            acc[name] = (acc[name] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+    const serviceChartData = Object.entries(serviceUsageCounts)
+        .map(([service, count]) => ({ service, count }))
+        .sort((a, b) => b.count - a.count);
 
   return (
     <div className="space-y-8 font-headline">
@@ -135,7 +182,7 @@ export default function DashboardPage() {
                         {Object.entries(leadsByStatus).map(([status, count]) => (
                             <div key={status} className="flex justify-between items-center bg-muted p-3">
                                 <span className="font-bold text-muted-foreground text-lg">{status}</span>
-                                <span className="font-black text-3xl">{count}</span>
+                                <span className="font-black text-3xl">{Number(count)}</span>
                             </div>
                         ))}
                     </CardContent>

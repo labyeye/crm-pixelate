@@ -91,8 +91,8 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {allClients.map(client => (
-                                <SelectItem key={client.id} value={client.id.toString()}>
+                              {(allClients ?? []).filter(c => c.id != null).map(client => (
+                                <SelectItem key={String(client.id)} value={String(client.id)}>
                                   {client.name}
                                 </SelectItem>
                               ))}
@@ -124,25 +124,24 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
                                         <CommandInput placeholder="Search services..." />
                                         <CommandEmpty>No service found.</CommandEmpty>
                                         <CommandGroup>
-                                        {allServices.map((service) => (
-                                            <CommandItem
-                                                value={service.name}
-                                                key={service.id}
-                                                onSelect={(e) => {
-                                                    e.preventDefault(); // This is the fix
-                                                    const currentServices = field.value || [];
-                                                    const isSelected = currentServices.some(s => s.id === service.id);
-                                                    if (isSelected) {
-                                                        field.onChange(currentServices.filter(s => s.id !== service.id));
-                                                    } else {
-                                                        field.onChange([...currentServices, service]);
-                                                    }
-                                                }}
-                                            >
-                                                <Check className={cn("mr-2 h-4 w-4", field.value.some(s => s.id === service.id) ? "opacity-100" : "opacity-0")} />
-                                                {service.name}
-                                            </CommandItem>
-                                        ))}
+                    {allServices.map((service) => (
+                      <CommandItem
+                        value={service.name}
+                        key={service.id}
+                        onSelect={(val: string) => {
+                          const currentServices = field.value || [];
+                          const isSelected = currentServices.some(s => s.id === service.id);
+                          if (isSelected) {
+                            field.onChange(currentServices.filter(s => s.id !== service.id));
+                          } else {
+                            field.onChange([...currentServices, service]);
+                          }
+                        }}
+                      >
+                        <Check className={cn("mr-2 h-4 w-4", field.value.some(s => s.id === service.id) ? "opacity-100" : "opacity-0")} />
+                        {service.name}
+                      </CommandItem>
+                    ))}
                                         </CommandGroup>
                                     </Command>
                                 </PopoverContent>

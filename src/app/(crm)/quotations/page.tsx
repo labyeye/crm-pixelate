@@ -1,10 +1,10 @@
 
-'use client';
+ 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
-import { quotations as initialQuotations, Quotation, Project, users, clients } from "@/lib/data";
+import type { Quotation, Project } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { AddQuotationDialog } from "@/components/quotations/add-quotation-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -22,23 +22,37 @@ if (typeof window !== 'undefined' && !(window as any).__projectsStore) {
 }
 
 export default function QuotationsPage() {
-  const [quotations, setQuotations] = useState<Quotation[]>(initialQuotations);
+  const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/quotations');
+        if (!res.ok) throw new Error(`Failed to fetch quotations: ${res.status}`);
+        const items = await res.json();
+        if (mounted) setQuotations(items as Quotation[]);
+      } catch (err) {
+        console.error('Failed to load quotations', err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   const addQuotation = (newQuoteData: Omit<Quotation, 'id' | 'status' | 'authorId' | 'clientName'>) => {
     if (!user) return;
-    const client = clients.find(c => c.id === newQuoteData.clientId);
-    if (!client) return;
-      
+    // for now, optimistic local creation; server-side creation will be added via API later
+    const clientName = (newQuoteData.clientId != null) ? String(newQuoteData.clientId) : 'Unknown';
     const newId = `Q-${new Date().getFullYear()}-${(quotations.length + 1).toString().padStart(3, '0')}`;
     const newQuotation: Quotation = {
       ...newQuoteData,
       id: newId,
       status: 'PENDING',
       authorId: user.id,
-      clientName: client.name,
+      clientName,
     };
     setQuotations(prev => [newQuotation, ...prev]);
   };
@@ -52,13 +66,14 @@ export default function QuotationsPage() {
   };
 
   const createProjectFromQuote = (quote: Quotation) => {
-    const newProject: Project = {
-        id: new Date().getTime(), // simple unique id
-        title: `New Project for ${quote.clientName}`,
-        client: quote.clientName,
-        progress: 0,
-        description: `Project created from quotation ${quote.id}. Services: ${quote.services.map(s => s.name).join(', ')}`,
-    };
+  const servicesList = quote.services ?? [];
+  const newProject: Project = {
+    id: new Date().getTime(), // simple unique id
+    title: `New Project for ${quote.clientName}`,
+    client: quote.clientName,
+    progress: 0,
+    description: `Project created from quotation ${quote.id}. Services: ${servicesList.map(s => s.name).join(', ')}`,
+  };
 
     // This is a global state hack for demo purposes.
     (window as any).__projectsStore.push(newProject);
@@ -83,8 +98,9 @@ export default function QuotationsPage() {
     });
   };
 
-  const getAuthorName = (authorId: number) => {
-      return users.find(u => u.id === authorId)?.name || 'Unknown';
+  const getAuthorName = (authorId: number | undefined) => {
+    // we don't fetch users here for performance; return unknown when not provided
+    return 'Unknown';
   }
 
   return (
@@ -121,15 +137,15 @@ export default function QuotationsPage() {
                 <TableCell className="py-4">
                     <div className="font-bold text-base">{quote.id}</div>
                     <div className="text-sm text-muted-foreground">by {getAuthorName(quote.authorId)}</div>
-                    <div className="text-sm text-muted-foreground">{new Date(quote.deliveryDate).toLocaleDateString()}</div>
+                    <div className="text-sm text-muted-foreground">{quote.deliveryDate ? new Date(quote.deliveryDate).toLocaleDateString() : ''}</div>
                 </TableCell>
                 <TableCell className="text-base py-4 font-bold">{quote.clientName}</TableCell>
                 <TableCell className="text-base py-4">
                     <div className="flex flex-wrap gap-1">
-                        {quote.services.map(s => <Badge key={s.id} variant="secondary">{s.name}</Badge>)}
+                        {(quote.services ?? []).map(s => <Badge key={s.id} variant="secondary">{s.name}</Badge>)}
                     </div>
                 </TableCell>
-                <TableCell className="text-right font-bold text-base py-4">₹{(quote.amount - quote.discount).toLocaleString()}</TableCell>
+                <TableCell className="text-right font-bold text-base py-4">₹{((quote.amount ?? 0) - (quote.discount ?? 0)).toLocaleString()}</TableCell>
                 <TableCell className="text-center py-4">
                     <span className={cn("text-xl font-black tracking-widest p-2",
                       quote.status === 'APPROVED' && 'bg-success text-success-foreground',
@@ -143,8 +159,10 @@ export default function QuotationsPage() {
                     <div className="flex items-center justify-end gap-2">
                         {quote.status === 'PENDING' && (
                             <>
-                                <Button size="sm" variant="destructive" onClick={() => updateStatus(quote.id, 'REJECTED')}>REJECT</Button>
-                                <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" onClick={() => updateStatus(quote.id, 'APPROVED')}>APPROVE</Button>
+                                {quote.id && <>
+                                  <Button size="sm" variant="destructive" onClick={() => updateStatus(quote.id as string, 'REJECTED')}>REJECT</Button>
+                                  <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90" onClick={() => updateStatus(quote.id as string, 'APPROVED')}>APPROVE</Button>
+                                </>}
                             </>
                         )}
                         {quote.status === 'APPROVED' && (
@@ -161,7 +179,7 @@ export default function QuotationsPage() {
                               <Download className="mr-2 h-4 w-4" />
                               Download PDF
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => deleteQuotation(quote.id)} className="text-destructive font-bold">
+                            <DropdownMenuItem onClick={() => quote.id && deleteQuotation(quote.id as string)} className="text-destructive font-bold">
                               Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>

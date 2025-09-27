@@ -46,7 +46,7 @@ const formSchema = z.object({
 type AddClientDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onAddClient: (newClient: Omit<Client, 'id'>) => void;
+  onAddClient: (newClient: Omit<Client, 'id'>) => void | Promise<void | Client>;
   children: React.ReactNode;
 };
 
@@ -64,8 +64,8 @@ export function AddClientDialog({ isOpen, setIsOpen, onAddClient, children }: Ad
 
   const hasGst = form.watch("hasGst");
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddClient(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await onAddClient(values);
     form.reset();
     setIsOpen(false);
   }

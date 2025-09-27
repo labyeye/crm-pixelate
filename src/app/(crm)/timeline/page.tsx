@@ -4,7 +4,10 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { projects as initialProjects, projectStatuses, Project, ProjectStatus, teamMembers, TeamMember } from '@/lib/data';
+import type { Project, ProjectStatus, TeamMember } from '@/lib/data';
+
+// Local copy of project statuses to avoid importing value exports from server-side modules
+const projectStatuses: ProjectStatus[] = ['BACKLOG', 'IN PROGRESS', 'IN REVIEW', 'COMPLETED'];
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
@@ -41,15 +44,28 @@ export default function TimelinePage() {
   });
 
   const [isBrowser, setIsBrowser] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   useEffect(() => {
-    // Group initial projects by status
-    const groupedProjects = projectStatuses.reduce((acc, status) => {
-      acc[status] = initialProjects.filter(p => p.status === status);
-      return acc;
-    }, {} as Record<ProjectStatus, Project[]>);
-    setProjectData(groupedProjects);
-    setIsBrowser(true); // Component has mounted, we are in the browser
+    let mounted = true;
+    (async () => {
+      try {
+        const [projectsRes, membersRes] = await Promise.all([fetch('/api/projects'), fetch('/api/team-members')]);
+        const projects = (await projectsRes.json()) as Project[];
+        const members = (await membersRes.json()) as TeamMember[];
+        if (!mounted) return;
+        const groupedProjects = projectStatuses.reduce((acc, status) => {
+          acc[status] = (projects as Project[]).filter(p => p.status === status);
+          return acc;
+        }, {} as Record<ProjectStatus, Project[]>);
+        setProjectData(groupedProjects);
+        setTeamMembers(members as TeamMember[]);
+      } catch (err) {
+        console.error('Failed to load timeline data', err);
+      }
+    })();
+    setIsBrowser(true);
+    return () => { mounted = false; };
   }, []);
 
   const onDragEnd = (result: DropResult) => {
@@ -68,10 +84,10 @@ export default function TimelinePage() {
     } else {
       const sourceItems = projectData[sourceStatus];
       const destItems = projectData[destStatus];
-      const result = move(sourceItems, destItems, source, destination);
-      
-      const updatedSourceItems = result[sourceStatus];
-      const updatedDestItems = result[destStatus].map(item => ({...item, status: destStatus}));
+  const resultMap = move(sourceItems, destItems, source, destination) as Record<string, Project[]>;
+
+  const updatedSourceItems = resultMap[sourceStatus] ?? [];
+  const updatedDestItems = (resultMap[destStatus] ?? []).map(item => ({...item, status: destStatus}));
 
       setProjectData(prev => ({
         ...prev,
@@ -81,7 +97,8 @@ export default function TimelinePage() {
     }
   };
 
-  const handleAssigneeChange = (projectId: number, memberId: number) => {
+  const handleAssigneeChange = (projectId: number | undefined, memberId: number | undefined) => {
+    if (projectId == null || memberId == null) return;
     const newProjectData = { ...projectData };
     for (const status in newProjectData) {
         const projectIndex = newProjectData[status as ProjectStatus].findIndex(p => p.id === projectId);
@@ -124,8 +141,8 @@ export default function TimelinePage() {
                       {status}
                     </h2>
                     <div className="space-y-4 h-full min-h-[200px]">
-                      {projectData[status].map((project, index) => (
-                        <Draggable key={project.id.toString()} draggableId={project.id.toString()} index={index}>
+                      {projectData[status].filter(p => p.id != null).map((project, index) => (
+                        <Draggable key={project.id!.toString()} draggableId={project.id!.toString()} index={index}>
                           {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}
@@ -150,8 +167,8 @@ export default function TimelinePage() {
                                   <div className="flex items-center justify-between w-full">
                                     <div className="flex -space-x-2">
                                         <TooltipProvider>
-                                        {project.assignees?.map(assigneeId => {
-                                            const member = teamMembers.find(m => m.id === assigneeId);
+                    {project.assignees?.map(assigneeId => {
+                      const member = teamMembers.find(m => m.id === assigneeId);
                                             return member ? (
                                                 <Tooltip key={member.id}>
                                                     <TooltipTrigger asChild>
@@ -181,7 +198,7 @@ export default function TimelinePage() {
                                             key={member.id}
                                             checked={project.assignees?.includes(member.id)}
                                             onSelect={(e) => e.preventDefault()} // prevent closing
-                                            onCheckedChange={() => handleAssigneeChange(project.id, member.id)}
+                                            onCheckedChange={() => project.id != null && handleAssigneeChange(project.id, member.id)}
                                           >
                                             {member.name}
                                           </DropdownMenuCheckboxItem>

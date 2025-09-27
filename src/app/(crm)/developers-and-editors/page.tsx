@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { teamMembers as initialTeamMembers, TeamMember, addTeamMember } from "@/lib/data";
+import type { TeamMember } from "@/lib/data";
 import { AddMemberDialog } from "@/components/developers-and-editors/add-member-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +11,23 @@ import { Button } from "@/components/ui/button";
 
 export default function DevelopersAndEditorsPage() {
   const { user } = useAuth();
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/team-members');
+        if (!res.ok) throw new Error(`Failed to fetch team members: ${res.status}`);
+        const items = await res.json();
+        if (mounted) setTeamMembers(items as TeamMember[]);
+      } catch (err) {
+        console.error('Failed to load team members', err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   if (user?.role !== 'admin') {
     return (
@@ -29,9 +44,16 @@ export default function DevelopersAndEditorsPage() {
     );
   }
   
-  const handleAddMember = (newMemberData: Omit<TeamMember, 'id'>) => {
-    const addedMember = addTeamMember(newMemberData);
-    setTeamMembers(prev => [...prev, addedMember]);
+  const handleAddMember = async (newMemberData: Omit<TeamMember, 'id'>) => {
+    try {
+      const res = await fetch('/api/team-members', { method: 'POST', body: JSON.stringify(newMemberData), headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) throw new Error(`Failed to create team member: ${res.status}`);
+      const addedMember = await res.json();
+      setTeamMembers(prev => [...prev, addedMember as TeamMember]);
+    } catch (err) {
+      console.error('Failed to add member', err);
+      throw err;
+    }
   };
 
   return (

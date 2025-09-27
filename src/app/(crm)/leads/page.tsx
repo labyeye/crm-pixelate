@@ -1,17 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { leads as initialLeads, leadStatuses, Lead } from '@/lib/data';
+import type { Lead } from '@/lib/data';
+
+const leadStatuses: ('NEW' | 'QUALIFIED' | 'PROPOSAL SENT')[] = ['NEW', 'QUALIFIED', 'PROPOSAL SENT'];
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  const [leads, setLeads] = useState<Lead[]>([]);
 
-  const updateLeadStatus = (leadId: number, newStatus: Lead['status']) => {
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/leads');
+        const items = await res.json();
+        if (mounted) setLeads(items as Lead[]);
+      } catch (err) {
+        console.error('Failed to load leads', err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const updateLeadStatus = (leadId: number | undefined, newStatus: Lead['status']) => {
+    if (leadId == null) return;
     setLeads(leads.map(lead => lead.id === leadId ? { ...lead, status: newStatus } : lead));
   };
 
@@ -50,7 +67,7 @@ export default function LeadsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">{lead.project}</p>
-                    <p className="mt-4 text-2xl font-black">₹{lead.value.toLocaleString()}</p>
+                    <p className="mt-4 text-2xl font-black">₹{(lead.value ?? 0).toLocaleString()}</p>
                   </CardContent>
                 </Card>
               ))}

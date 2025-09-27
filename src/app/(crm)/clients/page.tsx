@@ -1,20 +1,41 @@
 
-'use client';
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { clients as initialClients, Client, addClient } from "@/lib/data";
+import type { Client } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { AddClientDialog } from "@/components/clients/add-client-dialog";
 import { Badge } from "@/components/ui/badge";
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/clients');
+        if (!res.ok) throw new Error(`Failed to fetch clients: ${res.status}`);
+        const items = await res.json();
+        if (mounted) setClients(items as Client[]);
+      } catch (err) {
+        console.error('Failed to load clients', err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
   
-  const handleAddClient = (newClientData: Omit<Client, 'id'>) => {
-    const newClient = addClient(newClientData);
-    setClients(prev => [...prev, newClient]);
+  const handleAddClient = async (newClientData: Omit<Client, 'id' | '_id'>) => {
+    try {
+      const res = await fetch('/api/clients', { method: 'POST', body: JSON.stringify(newClientData), headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) throw new Error(`Failed to create client: ${res.status}`);
+      const newClient = await res.json();
+      setClients(prev => [...prev, newClient as Client]);
+    } catch (err) {
+      console.error('Failed to add client', err);
+      throw err;
+    }
   };
 
   return (

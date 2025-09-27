@@ -36,7 +36,7 @@ const formSchema = z.object({
 type AddMemberDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onAddMember: (newMember: Omit<TeamMember, 'id'>) => void;
+  onAddMember: (newMember: Omit<TeamMember, 'id'>) => void | Promise<void | TeamMember>;
   children: React.ReactNode;
 };
 
@@ -52,8 +52,8 @@ export function AddMemberDialog({ isOpen, setIsOpen, onAddMember, children }: Ad
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddMember(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await onAddMember(values);
     form.reset();
     setIsOpen(false);
   }

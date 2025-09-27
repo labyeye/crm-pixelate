@@ -8,6 +8,50 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    serverComponentsExternalPackages: ['mongodb'],
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Fallback for Node.js modules that shouldn't run in the browser
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        child_process: false,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        util: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+
+      // Ignore MongoDB's problematic modules on the client side
+      config.plugins.push(
+        new config.constructor.IgnorePlugin({
+          resourceRegExp: /^(mongodb-client-encryption|child_process|worker_threads|perf_hooks)$/,
+        })
+      );
+    }
+
+    // Exclude MongoDB's server-only modules
+    config.externals = config.externals || [];
+    config.externals.push({
+      'mongodb-client-encryption': 'commonjs mongodb-client-encryption',
+      'aws4': 'commonjs aws4',
+      'snappy': 'commonjs snappy',
+      'kerberos': 'commonjs kerberos',
+      '@mongodb-js/zstd': 'commonjs @mongodb-js/zstd',
+    });
+
+    return config;
+  },
   images: {
     remotePatterns: [
       {

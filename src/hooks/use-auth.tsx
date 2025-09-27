@@ -1,8 +1,8 @@
 
-'use client';
+"use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { users, User } from '@/lib/data';
+import type { User } from '@/lib/data';
 import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
@@ -24,29 +24,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    const checkUser = () => {
+    let mounted = true;
+    (async () => {
       try {
         const storedUserId = sessionStorage.getItem('userId');
+        // fetch users from the API instead of importing server-only modules
+        const res = await fetch('/api/users');
+        const allUsers = (await res.json()) as User[];
+        if (!mounted) return;
         if (storedUserId) {
-          const foundUser = users.find(u => u.id === parseInt(storedUserId, 10));
+          const foundUser = allUsers.find(u => (u.id ?? (u._id as any)) === (isNaN(Number(storedUserId)) ? storedUserId : Number(storedUserId)));
           if (foundUser) {
             setUser(foundUser);
           } else {
-            // Clear invalid user id from storage
             sessionStorage.removeItem('userId');
             setUser(null);
           }
         } else {
-            setUser(null);
+          setUser(null);
         }
       } catch (e) {
-        console.error("Could not access session storage.");
+        console.error("Could not access users or session storage.", e);
         setUser(null);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
-    };
-    checkUser();
+    })();
+    return () => { mounted = false; };
   }, [pathname]); // Re-check on path change could be useful
 
   useEffect(() => {
@@ -58,14 +62,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [loading, user, pathname, router]);
 
-  const login = (userId: number) => {
-    const foundUser = users.find(u => u.id === userId);
-    if (foundUser) {
-      setUser(foundUser);
-      sessionStorage.setItem('userId', String(userId));
-      return true;
-    }
-    return false;
+  const login = (userId: string | number) => {
+    // synchronous behavior retained: set the id in sessionStorage and rely on the
+    // next checkUser cycle to refresh the user. We optimistically set the user
+    // if the list is already loaded.
+  sessionStorage.setItem('userId', String(userId));
+    // Try to find user in currently loaded list (fast path)
+    // Note: getUsers() is async so we don't await here to keep login sync.
+    // If the user isn't loaded yet, the effect will pick them up.
+    (async () => {
+      try {
+        const res = await fetch('/api/users');
+        const allUsers = (await res.json()) as User[];
+        const normalized = allUsers.find(u => {
+          const candidate = u.id ?? (u._id as any);
+          // compare strings and numbers equivalently
+          return String(candidate) === String(userId);
+        });
+        if (normalized) setUser(normalized);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return true;
   };
 
   const logout = () => {

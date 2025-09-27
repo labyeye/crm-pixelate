@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { services as initialServices, Service, addService } from "@/lib/data";
+import type { Service } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
@@ -20,7 +20,22 @@ const formSchema = z.object({
 
 export default function ServicesPage() {
   const { user } = useAuth();
-  const [services, setServices] = useState<Service[]>(initialServices);
+  const [services, setServices] = useState<Service[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/services');
+        if (!res.ok) throw new Error(`Failed to fetch services: ${res.status}`);
+        const items = await res.json();
+        if (mounted) setServices(items as Service[]);
+      } catch (err) {
+        console.error('Failed to load services', err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,10 +57,16 @@ export default function ServicesPage() {
     );
   }
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const newService = addService({ name: values.name });
-    setServices(prev => [...prev, newService]);
-    form.reset();
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const res = await fetch('/api/services', { method: 'POST', body: JSON.stringify({ name: values.name }), headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) throw new Error(`Failed to create service: ${res.status}`);
+      const newService = await res.json();
+      setServices(prev => [...prev, newService as Service]);
+      form.reset();
+    } catch (err) {
+      console.error('Failed to add service', err);
+    }
   };
 
   return (

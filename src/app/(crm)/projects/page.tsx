@@ -4,39 +4,26 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { projects as initialProjects, Project } from "@/lib/data";
+import type { Project } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 
-// This is a global state hack for demo purposes.
-// In a real app, you'd use a proper state management solution.
-let projectsStore: Project[] = initialProjects;
-if (typeof window !== 'undefined' && !(window as any).__projectsStore) {
-    (window as any).__projectsStore = projectsStore;
-} else if (typeof window !== 'undefined') {
-    projectsStore = (window as any).__projectsStore;
-}
-
-
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(projectsStore);
+  const [projects, setProjects] = useState<Project[]>([]);
 
-  // This effect will sync the state with the global store.
-  // This is needed because Next.js can re-render the page without a full reload,
-  // and it prevents hydration errors by running only on the client.
   useEffect(() => {
-    const syncProjects = () => {
-      if ((window as any).__projectsStore !== projects) {
-        setProjects([...(window as any).__projectsStore]);
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/projects');
+        if (!res.ok) throw new Error(`Failed to fetch projects: ${res.status}`);
+        const items = await res.json();
+        if (mounted) setProjects(items as Project[]);
+      } catch (err) {
+        console.error('Failed to load projects', err);
       }
-    };
-    
-    // Initial sync
-    syncProjects();
-
-    // Set up an interval to check for changes from other pages.
-    const interval = setInterval(syncProjects, 500);
-    return () => clearInterval(interval);
-  }, [projects]);
+    })();
+    return () => { mounted = false; };
+  }, []);
 
 
   return (
