@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
+      // Use require here to avoid adding webpack to top-level imports (no extra deps required)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const webpack = require('webpack');
+
       // Fallback for Node.js modules that shouldn't run in the browser
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -34,7 +38,7 @@ const nextConfig: NextConfig = {
 
       // Ignore MongoDB's problematic modules on the client side
       config.plugins.push(
-        new config.constructor.IgnorePlugin({
+        new webpack.IgnorePlugin({
           resourceRegExp: /^(mongodb-client-encryption|child_process|worker_threads|perf_hooks)$/,
         })
       );
