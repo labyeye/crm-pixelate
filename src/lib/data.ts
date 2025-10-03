@@ -5,7 +5,7 @@
 // async getters below.
 
 export interface Client {
-    id?: number;
+    id?: number | string;
     _id?: string | any;
     name: string;
     email?: string;
@@ -30,7 +30,7 @@ export async function addClient(client: Omit<Client, 'id' | '_id'>) {
 }
 
 export interface User {
-    id?: number;
+    id?: number | string;
     _id?: string | any;
     name: string;
     email: string;
@@ -73,7 +73,7 @@ export async function getLeads() {
 export type ProjectStatus = 'BACKLOG' | 'IN PROGRESS' | 'IN REVIEW' | 'COMPLETED';
 
 export interface Project {
-    id?: number;
+    id?: number | string;
     _id?: string | any;
     title: string;
     client?: string;
@@ -81,7 +81,11 @@ export interface Project {
     description?: string;
     status?: ProjectStatus;
     dueDate?: string;
-    assignees?: any[]; // Array of TeamMember IDs
+    services?: { id?: string | number; name?: string; amount?: number }[];
+    assignees?: { id?: string | number; payout?: number }[]; // Array of assignee objects with payout
+    amount?: number;
+    workUrl?: string;
+    brandLogo?: string;
 }
 
 export let projects: Project[] = [];
@@ -98,9 +102,9 @@ export interface Quotation {
     id?: string;
     _id?: string | any;
     status?: 'APPROVED' | 'PENDING' | 'REJECTED';
-    clientId?: number | any;
+    clientId?: number | string | any;
     clientName?: string;
-    services?: { id: number; name: string }[];
+    services?: { id: number | string; name: string }[];
     amount?: number;
     discount?: number;
     deliveryDate?: Date;
@@ -139,7 +143,7 @@ export async function getStats() {
 }
 
 export interface Service {
-    id?: number;
+    id?: number | string;
     _id?: string | any;
     name: string;
 }
@@ -163,7 +167,7 @@ export interface TeamMember {
     email?: string;
     phone?: string;
     address?: string;
-    role?: 'Web Developer' | 'Editor' | 'Designer' | 'Project Manager';
+    role?: 'Founder' | 'Co-Founder' | 'Web Developer' | 'Editor' | 'Designer' | 'Project Manager' | 'Lead Generator';
     pan?: string;
     aadhar?: string;
     secondaryPhone?: string;

@@ -17,7 +17,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { Quotation, Service, Client } from "@/lib/data";
-import { services as allServices, clients as allClients } from "@/lib/data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -31,8 +30,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 
 const formSchema = z.object({
-  clientId: z.coerce.number({required_error: "Please select a client."}).positive("Please select a client."),
-  services: z.array(z.object({ id: z.number(), name: z.string() })).min(1, "At least one service is required."),
+  // IDs come from the database as `_id` (ObjectId). We normalize to strings on the client,
+  // so validate clientId and service ids as non-empty strings.
+  clientId: z.string({ required_error: "Please select a client." }).min(1, "Please select a client."),
+  services: z.array(z.object({ id: z.string(), name: z.string() })).min(1, "At least one service is required."),
   amount: z.coerce.number().positive("Amount must be positive."),
   discount: z.coerce.number().min(0, "Discount cannot be negative.").default(0),
   deliveryDate: z.date({ required_error: "A delivery date is required."}),
@@ -41,7 +42,8 @@ const formSchema = z.object({
 type AddQuotationDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onAddQuotation: (newQuote: Omit<Quotation, 'id' | 'status' | 'authorId' | 'clientName'>) => void;
+  // The client sends clientId and service ids as strings (normalized from `_id`).
+  onAddQuotation: (newQuote: Omit<Quotation, 'id' | 'status' | 'authorId' | 'clientName'> & { clientId: string; services: { id: string; name: string }[] }) => void;
   children: React.ReactNode;
 };
 
@@ -60,6 +62,36 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
     form.reset();
     setIsOpen(false);
   }
+
+  // client-side fetched lists to avoid importing server-only modules into the client bundle
+  // Use local types where we guarantee `id` is a string for keys and select values.
+  type LocalClient = Client & { id: string };
+  type LocalService = Service & { id: string };
+
+  const [allServices, setAllServices] = React.useState<LocalService[]>([]);
+  const [allClients, setAllClients] = React.useState<LocalClient[]>([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+    if (!isOpen) return;
+    (async () => {
+      try {
+        const [sRes, cRes] = await Promise.all([fetch('/api/services'), fetch('/api/clients')]);
+        if (!sRes.ok || !cRes.ok) return;
+  const [sJson, cJson] = await Promise.all([sRes.json(), cRes.json()]);
+        if (!mounted) return;
+  // Normalize server objects: prefer `id` if present, otherwise use `._id` as string.
+  const normServices = (sJson as any[] || []).map(s => ({ ...s, id: s.id ?? (s._id ? String(s._id) : String(s.id)) })) as LocalService[];
+  const normClients = (cJson as any[] || []).map(c => ({ ...c, id: c.id ?? (c._id ? String(c._id) : String(c.id)) })) as LocalClient[];
+  setAllServices(normServices);
+  setAllClients(normClients);
+      } catch (e) {
+        // ignore fetch errors; keep lists empty
+        console.error('Failed to load services or clients', e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -84,7 +116,7 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Client</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                          <Select onValueChange={field.onChange} value={field.value ? String(field.value) : undefined}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a client" />
@@ -113,7 +145,7 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
                                 <FormControl>
                                     <Button variant="outline" role="combobox" className={cn("w-full justify-between h-auto", !field.value.length && "text-muted-foreground")}>
                                         <div className="flex flex-wrap gap-1">
-                                            {field.value.length > 0 ? field.value.map(s => <div key={s.id} className="bg-muted text-muted-foreground text-xs font-bold p-1">{s.name}</div>) : "Select services"}
+                                            {field.value.length > 0 ? field.value.map(s => <div key={String(s.id)} className="bg-muted text-muted-foreground text-xs font-bold p-1">{s.name}</div>) : "Select services"}
                                         </div>
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -127,18 +159,21 @@ export function AddQuotationDialog({ isOpen, setIsOpen, onAddQuotation, children
                     {allServices.map((service) => (
                       <CommandItem
                         value={service.name}
-                        key={service.id}
+                        key={String(service.id)}
+                        // Prevent the popover/command from closing on mouse down so multiple
+                        // services can be toggled without the command losing focus.
+                        onMouseDown={(e) => e.preventDefault()}
                         onSelect={(val: string) => {
                           const currentServices = field.value || [];
-                          const isSelected = currentServices.some(s => s.id === service.id);
+                          const isSelected = currentServices.some(s => String(s.id) === String(service.id));
                           if (isSelected) {
-                            field.onChange(currentServices.filter(s => s.id !== service.id));
+                            field.onChange(currentServices.filter(s => String(s.id) !== String(service.id)));
                           } else {
-                            field.onChange([...currentServices, service]);
+                            field.onChange([...currentServices, { ...service, id: String(service.id) }]);
                           }
                         }}
                       >
-                        <Check className={cn("mr-2 h-4 w-4", field.value.some(s => s.id === service.id) ? "opacity-100" : "opacity-0")} />
+                        <Check className={cn("mr-2 h-4 w-4", field.value.some(s => String(s.id) === String(service.id)) ? "opacity-100" : "opacity-0")} />
                         {service.name}
                       </CommandItem>
                     ))}

@@ -10,6 +10,8 @@ import type { Service } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -69,6 +71,43 @@ export default function ServicesPage() {
     }
   };
 
+  const [editingServiceId, setEditingServiceId] = useState<string | number | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+
+  const startEdit = (s: Service) => {
+    setEditingServiceId(s._id ?? s.id ?? null);
+    setEditingValue(s.name);
+  };
+
+  const cancelEdit = () => {
+    setEditingServiceId(null);
+    setEditingValue('');
+  };
+
+  const saveEdit = async () => {
+    if (!editingServiceId) return;
+    try {
+      const res = await fetch(`/api/services/${editingServiceId}`, { method: 'PUT', body: JSON.stringify({ name: editingValue }), headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) throw new Error(`Failed to update service: ${res.status}`);
+      const updated = await res.json();
+      setServices(prev => prev.map(s => ((s._id ?? s.id) === (updated._id ?? updated.id) ? updated : s)));
+      cancelEdit();
+    } catch (err) {
+      console.error('Failed to save service', err);
+    }
+  };
+
+  const deleteService = async (s: Service) => {
+    try {
+      const id = s._id ?? s.id;
+      const res = await fetch(`/api/services/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`Failed to delete service: ${res.status}`);
+      setServices(prev => prev.filter(x => (x._id ?? x.id) !== id));
+    } catch (err) {
+      console.error('Failed to delete service', err);
+    }
+  };
+
   return (
     <div className="space-y-8 font-headline">
       <header>
@@ -111,9 +150,34 @@ export default function ServicesPage() {
           </TableHeader>
           <TableBody>
             {services.map((s) => (
-              <TableRow key={s.id} className="border-b-2 border-black last:border-b-0">
-                <TableCell className="font-mono text-base py-4">{s.id}</TableCell>
-                <TableCell className="font-bold text-base py-4">{s.name}</TableCell>
+              <TableRow key={s._id ?? s.id} className="border-b-2 border-black last:border-b-0">
+                <TableCell className="font-mono text-base py-4">{s._id ?? s.id}</TableCell>
+                <TableCell className="font-bold text-base py-4">
+                  {editingServiceId === (s._id ?? s.id) ? (
+                    <div className="flex items-center gap-2">
+                      <Input value={editingValue} onChange={(e) => setEditingValue(e.target.value)} />
+                      <Button size="sm" onClick={saveEdit}>Save</Button>
+                      <Button size="sm" variant="ghost" onClick={cancelEdit}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>{s.name}</div>
+                      <div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-5 w-5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => startEdit(s)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteService(s)} className="text-destructive">Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

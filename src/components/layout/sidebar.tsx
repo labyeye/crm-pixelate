@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useAuth } from '@/hooks/use-auth';
-import { Code, Users, LayoutDashboard, KanbanSquare, FileText, Briefcase, Receipt, LifeBuoy, Columns } from 'lucide-react';
+import { Code, Users, LayoutDashboard, KanbanSquare, FileText, Briefcase, Receipt, LifeBuoy, Columns, BarChart as BarChartIcon, DollarSign as DollarIcon } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', adminOnly: false, icon: LayoutDashboard },
@@ -17,9 +17,11 @@ const navItems = [
   { href: '/clients', label: 'Clients', adminOnly: false, icon: Users },
   { href: '/quotations', label: 'Quotations', adminOnly: false, icon: FileText },
   { href: '/projects', label: 'Projects', adminOnly: false, icon: Briefcase },
+  { href: '/analytics', label: 'Analytics', adminOnly: false, icon: BarChartIcon },
   { href: '/invoicing', label: 'Invoicing', adminOnly: true, icon: Receipt },
   { href: '/developers-and-editors', label: 'Developers & Editors', adminOnly: true, icon: Users },
   { href: '/services', label: 'Services', adminOnly: true, icon: Code },
+  { href: '/expenses', label: 'Expenses', adminOnly: false, icon: DollarIcon },
   { href: '/support', label: 'Support', adminOnly: false, icon: LifeBuoy },
 ];
 

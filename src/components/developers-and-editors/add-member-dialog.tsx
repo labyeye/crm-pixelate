@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,7 +26,8 @@ const formSchema = z.object({
   email: z.string().email({ message: "A valid email is required." }),
   phone: z.string().min(10, { message: "A valid phone number is required." }),
   address: z.string().min(5, { message: "Address is required." }),
-  role: z.enum(['Web Developer', 'Editor', 'Designer', 'Project Manager']),
+  // include founder roles and standard roles
+  role: z.union([z.literal('Founder'), z.literal('Co-Founder'), z.literal('Web Developer'), z.literal('Editor'), z.literal('Designer'), z.literal('Project Manager'), z.literal('Lead Generator')]),
   pan: z.string().optional(),
   aadhar: z.string().optional(),
   secondaryPhone: z.string().optional(),
@@ -37,27 +39,53 @@ type AddMemberDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   // allow onAddMember to return a Promise or sync value
-  onAddMember: (newMember: Omit<TeamMember, 'id'>) => void | Promise<void | TeamMember>;
+  onAddMember?: (newMember: Omit<TeamMember, 'id'>) => void | Promise<void | TeamMember>;
+  // Support edit mode
+  onSave?: (id: string | number, update: Partial<TeamMember>) => void | Promise<void | TeamMember>;
+  initialValues?: Partial<TeamMember>;
   children: React.ReactNode;
 };
 
-export function AddMemberDialog({ isOpen, setIsOpen, onAddMember, children }: AddMemberDialogProps) {
+export function AddMemberDialog({ isOpen, setIsOpen, onAddMember, onSave, initialValues, children }: AddMemberDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      role: "Web Developer",
+      name: initialValues?.name ?? "",
+      email: initialValues?.email ?? "",
+      phone: initialValues?.phone ?? "",
+      address: initialValues?.address ?? "",
+  role: initialValues?.role ?? "Web Developer",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await onAddMember(values);
+    if (initialValues && (initialValues._id || initialValues.id)) {
+      const id = initialValues._id ?? initialValues.id;
+      if (onSave) await onSave(id as any, values as Partial<TeamMember>);
+    } else {
+      if (onAddMember) await onAddMember(values);
+    }
     form.reset();
     setIsOpen(false);
   }
+
+  // Reset form when editing an existing member
+  React.useEffect(() => {
+    if (initialValues) {
+      form.reset({
+        name: initialValues.name ?? "",
+        email: initialValues.email ?? "",
+        phone: initialValues.phone ?? "",
+        address: initialValues.address ?? "",
+        role: initialValues.role ?? "Web Developer",
+        pan: initialValues.pan ?? undefined,
+        aadhar: initialValues.aadhar ?? undefined,
+        secondaryPhone: initialValues.secondaryPhone ?? undefined,
+        secondaryEmail: initialValues.secondaryEmail ?? undefined,
+        salary: initialValues.salary ?? undefined,
+      });
+    }
+  }, [initialValues]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -86,14 +114,17 @@ export function AddMemberDialog({ isOpen, setIsOpen, onAddMember, children }: Ad
                     <FormField control={form.control} name="role" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Role</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    <SelectItem value="Web Developer">Web Developer</SelectItem>
-                                    <SelectItem value="Editor">Editor</SelectItem>
-                                    <SelectItem value="Designer">Designer</SelectItem>
-                                    <SelectItem value="Project Manager">Project Manager</SelectItem>
-                                </SelectContent>
+                                              <SelectContent>
+                                <SelectItem value="Founder">Founder</SelectItem>
+                                <SelectItem value="Co-Founder">Co-Founder</SelectItem>
+                                <SelectItem value="Web Developer">Web Developer</SelectItem>
+                                <SelectItem value="Editor">Editor</SelectItem>
+                                <SelectItem value="Designer">Designer</SelectItem>
+                                <SelectItem value="Project Manager">Project Manager</SelectItem>
+                                <SelectItem value="Lead Generator">Lead Generator</SelectItem>
+                                              </SelectContent>
                             </Select>
                             <FormMessage />
                         </FormItem>

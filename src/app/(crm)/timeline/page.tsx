@@ -97,19 +97,20 @@ export default function TimelinePage() {
     }
   };
 
-  const handleAssigneeChange = (projectId: number | undefined, memberId: number | undefined) => {
-    if (projectId == null || memberId == null) return;
+  const handleAssigneeChange = (projectId: number | string | undefined, memberId: number | string | undefined) => {
+  if (projectId == null || memberId == null) return;
     const newProjectData = { ...projectData };
     for (const status in newProjectData) {
-        const projectIndex = newProjectData[status as ProjectStatus].findIndex(p => p.id === projectId);
+    const projectIndex = newProjectData[status as ProjectStatus].findIndex(p => String(p.id) === String(projectId));
         if (projectIndex !== -1) {
             const project = newProjectData[status as ProjectStatus][projectIndex];
-            const currentAssignees = project.assignees || [];
-            if (currentAssignees.includes(memberId)) {
-                project.assignees = currentAssignees.filter(id => id !== memberId);
-            } else {
-                project.assignees = [...currentAssignees, memberId];
-            }
+      const currentAssignees = project.assignees || [];
+      // assignees are objects { id, payout }
+    if (currentAssignees.some((a:any) => String(a.id ?? a) === String(memberId))) {
+    project.assignees = currentAssignees.filter((a:any) => String(a.id ?? a) !== String(memberId));
+      } else {
+        project.assignees = [...currentAssignees, { id: memberId, payout: 0 }];
+      }
             break;
         }
     }
@@ -167,9 +168,10 @@ export default function TimelinePage() {
                                   <div className="flex items-center justify-between w-full">
                                     <div className="flex -space-x-2">
                                         <TooltipProvider>
-                    {project.assignees?.map(assigneeId => {
-                      const member = teamMembers.find(m => m.id === assigneeId);
-                                            return member ? (
+          {project.assignees?.map((assignee:any) => {
+            const aid = assignee?.id ?? assignee;
+            const member = teamMembers.find(m => String(m.id) === String(aid));
+                      return member ? (
                                                 <Tooltip key={member.id}>
                                                     <TooltipTrigger asChild>
                                                         <Avatar className="border-2 border-background">
@@ -196,7 +198,7 @@ export default function TimelinePage() {
                                         {teamMembers.map(member => (
                                           <DropdownMenuCheckboxItem
                                             key={member.id}
-                                            checked={project.assignees?.includes(member.id)}
+                                            checked={project.assignees?.some((a:any) => String(a.id ?? a) === String(member.id))}
                                             onSelect={(e) => e.preventDefault()} // prevent closing
                                             onCheckedChange={() => project.id != null && handleAssigneeChange(project.id, member.id)}
                                           >

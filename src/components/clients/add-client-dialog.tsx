@@ -21,6 +21,7 @@ import type { Client } from "@/lib/data";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "../ui/scroll-area";
 import React from "react";
+import { useEffect } from "react";
 import { Separator } from "../ui/separator";
 
 
@@ -46,26 +47,55 @@ const formSchema = z.object({
 type AddClientDialogProps = {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onAddClient: (newClient: Omit<Client, 'id'>) => void | Promise<void | Client>;
+  onAddClient?: (newClient: Omit<Client, 'id'>) => void | Promise<void | Client>;
+  // onSave is used when editing an existing client
+  onSave?: (id: string | number, update: Partial<Client>) => void | Promise<void | Client>;
+  // initialValues when editing
+  initialValues?: Partial<Client>;
   children: React.ReactNode;
 };
 
-export function AddClientDialog({ isOpen, setIsOpen, onAddClient, children }: AddClientDialogProps) {
+export function AddClientDialog({ isOpen, setIsOpen, onAddClient, onSave, initialValues, children }: AddClientDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      hasGst: false,
+      name: initialValues?.name ?? "",
+      email: initialValues?.email ?? "",
+      phone: initialValues?.phone ?? "",
+      address: initialValues?.address ?? "",
+      hasGst: initialValues?.hasGst ?? false,
     },
   });
 
   const hasGst = form.watch("hasGst");
 
+  // When initialValues change (e.g. opening edit dialog), reset the form to show current values.
+  useEffect(() => {
+    if (initialValues) {
+      form.reset({
+        name: initialValues.name ?? "",
+        email: initialValues.email ?? "",
+        phone: initialValues.phone ?? "",
+        address: initialValues.address ?? "",
+        hasGst: initialValues.hasGst ?? false,
+        gstCompanyName: initialValues.gstCompanyName ?? undefined,
+        gstNumber: initialValues.gstNumber ?? undefined,
+        gstAddress: initialValues.gstAddress ?? undefined,
+      });
+    }
+  }, [initialValues]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await onAddClient(values);
+    if (initialValues && (initialValues._id || initialValues.id)) {
+      const id = initialValues._id ?? initialValues.id;
+      if (onSave) {
+        await onSave(id as any, values as Partial<Client>);
+      }
+    } else {
+      if (onAddClient) {
+        await onAddClient(values);
+      }
+    }
     form.reset();
     setIsOpen(false);
   }
@@ -129,8 +159,8 @@ export function AddClientDialog({ isOpen, setIsOpen, onAddClient, children }: Ad
                     </div>
                 </div>
               </ScrollArea>
-              <DialogFooter className="pt-8">
-                  <Button type="submit" size="lg" className="text-lg w-full">Create Client</Button>
+        <DialogFooter className="pt-8">
+          <Button type="submit" size="lg" className="text-lg w-full">{initialValues ? 'Save Changes' : 'Create Client'}</Button>
               </DialogFooter>
             </form>
         </Form>

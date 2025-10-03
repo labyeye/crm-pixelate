@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Client } from "@/lib/data";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 import { AddClientDialog } from "@/components/clients/add-client-dialog";
 import { Badge } from "@/components/ui/badge";
 
@@ -38,6 +40,33 @@ export default function ClientsPage() {
     }
   };
 
+  const handleDeleteClient = async (client: Client) => {
+    try {
+      const id = client._id ?? client.id;
+      const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`Failed to delete client: ${res.status}`);
+      setClients(prev => prev.filter(c => (c._id ?? c.id) !== id));
+    } catch (err) {
+      console.error('Failed to delete client', err);
+    }
+  };
+
+  const handleSaveClient = async (id: string | number, update: Partial<Client>) => {
+    try {
+      const res = await fetch(`/api/clients/${id}`, { method: 'PUT', body: JSON.stringify(update), headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) throw new Error(`Failed to update client: ${res.status}`);
+      const updated = await res.json();
+      setClients(prev => prev.map(c => ((c._id ?? c.id) === id ? updated : c)));
+    } catch (err) {
+      console.error('Failed to save client', err);
+      throw err;
+    }
+  };
+
+  // Edit dialog state
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   return (
     <div className="space-y-8 font-headline">
       <header className="flex items-center justify-between gap-4">
@@ -45,13 +74,23 @@ export default function ClientsPage() {
           <h1 className="text-5xl font-black tracking-tighter">CLIENTS</h1>
           <p className="text-muted-foreground text-lg">Manage all your clients.</p>
         </div>
-        <AddClientDialog 
-            isOpen={isDialogOpen}
-            setIsOpen={setIsDialogOpen}
-            onAddClient={handleAddClient}
-        >
-            <Button size="lg" className="text-lg">Add Client</Button>
-        </AddClientDialog>
+    <AddClientDialog 
+      isOpen={isDialogOpen}
+      setIsOpen={setIsDialogOpen}
+      onAddClient={handleAddClient}
+    >
+      <Button size="lg" className="text-lg">Add Client</Button>
+    </AddClientDialog>
+
+    <AddClientDialog
+      isOpen={isEditDialogOpen}
+      setIsOpen={setIsEditDialogOpen}
+      initialValues={editingClient ?? undefined}
+      onSave={handleSaveClient}
+    >
+      {/* trigger is controlled by row actions */}
+      <div />
+    </AddClientDialog>
       </header>
 
       <div className="border-2 border-black">
@@ -65,8 +104,8 @@ export default function ClientsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients.map((c) => (
-              <TableRow key={c.id} className="border-b-2 border-black last:border-b-0">
+                {clients.map((c) => (
+              <TableRow key={c._id ?? c.id} className="border-b-2 border-black last:border-b-0">
                 <TableCell className="font-bold text-base py-4">{c.name}</TableCell>
                 <TableCell className="text-base py-4">
                     <div>{c.email}</div>
@@ -74,7 +113,20 @@ export default function ClientsPage() {
                 </TableCell>
                 <TableCell className="text-base py-4">{c.address}</TableCell>
                 <TableCell className="text-right py-4">
-                    {c.hasGst ? <Badge>Registered</Badge> : <Badge variant="secondary">Not Registered</Badge>}
+                    <div className="flex items-center justify-end gap-2">
+                      {c.hasGst ? <Badge>Registered</Badge> : <Badge variant="secondary">Not Registered</Badge>}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => { setEditingClient(c); setIsEditDialogOpen(true); }}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteClient(c)} className="text-destructive">Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                 </TableCell>
               </TableRow>
             ))}

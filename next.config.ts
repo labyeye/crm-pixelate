@@ -8,9 +8,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['mongodb'],
-  },
+  // `serverExternalPackages` replaces the old experimental.serverComponentsExternalPackages
+  // option in newer Next.js versions. Keep MongoDB server-only package externalized.
+  serverExternalPackages: ['mongodb'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Use require here to avoid adding webpack to top-level imports (no extra deps required)
@@ -36,10 +36,18 @@ const nextConfig: NextConfig = {
         path: false,
       };
 
-      // Ignore MongoDB's problematic modules on the client side
+      // Alias problematic server-only packages to false so imports resolve to an empty module on the client
+      config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        mongodb: false,
+        'mongodb-client-encryption': false,
+        '@mongodb-js/zstd': false,
+      };
+
+      // Ignore MongoDB's and Node core problematic modules on the client side
       config.plugins.push(
         new webpack.IgnorePlugin({
-          resourceRegExp: /^(mongodb-client-encryption|child_process|worker_threads|perf_hooks)$/,
+          resourceRegExp: /^(mongodb-client-encryption|child_process|worker_threads|perf_hooks|dns|fs|net|tls|timers\/promises|fs\/promises)$/,
         })
       );
     }
